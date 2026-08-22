@@ -229,7 +229,13 @@ jobs:
           for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
             npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
           done
-          pnpm exec changeset publish --from-pack-dir "$RUNNER_TEMP/release-pack"
+          jq -r '.plan[][] | [.tarball.path, .tag] | @tsv' "$RUNNER_TEMP/release-pack/publish-plan.json" |
+            while IFS=$'\t' read -r tarball tag; do
+              npm publish "$RUNNER_TEMP/release-pack/$tarball" \
+                --registry "$NPM_CONFIG_REGISTRY" \
+                --tag "$tag" \
+                --provenance=false
+            done
 
       - name: Install the snapshot back from Verdaccio
         env:
