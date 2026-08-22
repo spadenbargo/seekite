@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -130,9 +131,13 @@ jobs:
           node-version: 24
       - run: pnpm install --frozen-lockfile
 
-      - name: Create snapshot versions and build publishable packages
+      - name: Create releasable versions and build publishable packages
         run: |
-          pnpm exec changeset version --snapshot ci
+          if node -e "const pre=require('./.changeset/pre.json'); process.exit(pre.mode === 'pre' ? 0 : 1)" 2>/dev/null; then
+            echo "Changesets prerelease mode is active; testing the committed prerelease versions"
+          else
+            pnpm exec changeset version --snapshot ci
+          fi
           pnpm --filter "./packages/*" build
 
       - name: Prepare native package metadata for the snapshot
