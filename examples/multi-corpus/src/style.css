@@ -1,0 +1,32 @@
+:root {
+  font-family: ui-sans-serif, system-ui;
+  background: #111820;
+  color: #eff5f7;
+}
+main {
+  width: min(780px, calc(100% - 3rem));
+  margin: 8rem auto;
+}
+h1 {
+  font-size: clamp(3rem, 10vw, 6rem);
+  letter-spacing: -0.06em;
+}
+button,
+input {
+  padding: 1rem;
+  margin: 0.3rem;
+  border: 1px solid #6b8997;
+  background: #182630;
+  color: inherit;
+  font: inherit;
+}
+input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 3rem 0 1rem;
+}
+li {
+  padding: 1rem 0;
+  color: #bed0d7;
+}

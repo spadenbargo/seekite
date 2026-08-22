@@ -1,0 +1,9 @@
+{"query":"install seekite with vite","relevant":["docs/getting-started.md"]}
+{"query":"configure multiple search corpora","relevant":["docs/configuration.md"]}
+{"query":"static and runtime embedding providers","relevant":["docs/providers.md"]}
+{"query":"binary index format and quantized vectors","relevant":["docs/index-format.md"]}
+{"query":"web worker search","relevant":["docs/web-workers.md"]}
+{"query":"vite plugin integration","relevant":["docs/integrations/vite.md"]}
+{"query":"typo tolarance","relevant":["docs/search-quality.md"]}
+{"query":"embedding cache github actions","relevant":["docs/incremental-builds.md"]}
+{"query":"browser runtime architecture","relevant":["docs/architecture.md"]}

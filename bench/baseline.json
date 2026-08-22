@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "label": "docs-baseline",
+  "synthetic": false,
+  "createdAt": "1970-01-01T00:00:00.000Z",
+  "config": {
+    "corpus": "docs",
+    "k": 10,
+    "candidates": {
+      "mini-static": {
+        "provider": "seekite:ternlight:mini:v1"
+      },
+      "mini-w25": {
+        "provider": "seekite:ternlight:mini:v1",
+        "query": {
+          "semanticWeight": 0.25
+        }
+      },
+      "lexical-only": {}
+    }
+  },
+  "environment": {
+    "node": "reference",
+    "cpu": "reference",
+    "platform": "reference",
+    "backend": "reference",
+    "seekite": "0.1.0-alpha.0"
+  },
+  "candidates": {
+    "mini-static": {
+      "quality": {
+        "lexical": {
+          "recall": 1,
+          "mrr": 0.7962962962962963,
+          "ndcg": 0.847881083730162
+        },
+        "semantic": {
+          "recall": 1,
+          "mrr": 0.8611111111111112,
+          "ndcg": 0.8957340346272057
+        },
+        "hybrid": {
+          "recall": 1,
+          "mrr": 0.8148148148148148,
+          "ndcg": 0.8624288341269906
+        }
+      },
+      "embed": {
+        "seconds": 0,
+        "textsPerSec": 0,
+        "backend": "reference",
+        "cacheHits": 0
+      },
+      "query": {
+        "p50ms": 0,
+        "p95ms": 0
+      },
+      "artifacts": {
+        "lexicalBytes": 21781,
+        "vectorsBytes": 12432,
+        "metadataBytes": 40758,
+        "totalBytes": 74971,
+        "gzip": {
+          "lexicalBytes": 9821,
+          "vectorsBytes": 11558,
+          "metadataBytes": 12708,
+          "totalBytes": 34087
+        }
+      }
+    },
+    "mini-w25": {
+      "quality": {
+        "lexical": {
+          "recall": 1,
+          "mrr": 0.7962962962962963,
+          "ndcg": 0.847881083730162
+        },
+        "semantic": {
+          "recall": 1,
+          "mrr": 0.8611111111111112,
+          "ndcg": 0.8957340346272057
+        },
+        "hybrid": {
+          "recall": 1,
+          "mrr": 0.8148148148148148,
+          "ndcg": 0.8624288341269906
+        }
+      },
+      "embed": {
+        "seconds": 0,
+        "textsPerSec": 0,
+        "backend": "reference",
+        "cacheHits": 0
+      },
+      "query": {
+        "p50ms": 0,
+        "p95ms": 0
+      },
+      "artifacts": {
+        "lexicalBytes": 21781,
+        "vectorsBytes": 12432,
+        "metadataBytes": 40758,
+        "totalBytes": 74971,
+        "gzip": {
+          "lexicalBytes": 9821,
+          "vectorsBytes": 11558,
+          "metadataBytes": 12708,
+          "totalBytes": 34087
+        }
+      }
+    },
+    "lexical-only": {
+      "quality": {
+        "lexical": {
+          "recall": 1,
+          "mrr": 0.7962962962962963,
+          "ndcg": 0.847881083730162
+        }
+      },
+      "embed": {
+        "seconds": 0,
+        "textsPerSec": 0,
+        "backend": "none",
+        "cacheHits": 0
+      },
+      "query": {
+        "p50ms": 0,
+        "p95ms": 0
+      },
+      "artifacts": {
+        "lexicalBytes": 21781,
+        "vectorsBytes": 0,
+        "metadataBytes": 40758,
+        "totalBytes": 62539,
+        "gzip": {
+          "lexicalBytes": 9821,
+          "vectorsBytes": 0,
+          "metadataBytes": 12708,
+          "totalBytes": 22529
+        }
+      }
+    }
+  },
+  "perQuery": []
+}

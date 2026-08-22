@@ -1,0 +1,7 @@
+# Commits listed here are ignored by `git blame` (configure with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# ).
+#
+# Add the commit hash of the repo-wide Oxfmt formatting pass below once it lands.
+# No formatting commit has been made yet as of this file's creation (the format
+# pass was run against the working tree only, per spec 01, but not committed).

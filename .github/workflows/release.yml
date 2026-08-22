@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  # Keep publishing inert until the npm trusted-publishing relationships and
+  # GitHub environment protections have been configured for every package.
+  # When the project is ready, restore the push-to-main trigger and remove the
+  # activation guard from the select job.
+  workflow_dispatch:
+    inputs:
+      activate_release:
+        description: Run the release state machine
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  select:
+    name: Select version or publish mode
+    if: inputs.activate_release && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.select.outputs.mode }}
+      publish_plan_artifact_id: ${{ steps.select.outputs.publish-plan-artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - id: select
+        uses: changesets/action/select-mode@v2
+
+  version:
+    name: Open or update the Version Packages pull request
+    needs: select
+    if: needs.select.outputs.mode == 'version'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - uses: changesets/action/version@v2
+        with:
+          script: pnpm exec changeset version
+          commit-message: "chore(release): version packages"
+          pr-title: "chore(release): version packages"
+
+  # This reusable matrix publishes only napi-rs platform packages. Its parity,
+  # metadata, tarball and blank-install gates must finish before Changesets is
+  # allowed to pack the prepared root package.
+  native:
+    name: Publish native platform packages first
+    needs: select
+    if: needs.select.outputs.mode == 'publish'
+    uses: ./.github/workflows/native.yml
+    with:
+      publish: true
+    permissions:
+      contents: read
+      id-token: write
+
+  pack:
+    name: Prepare and pack Changesets release
+    needs: [select, native]
+    if: needs.select.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    outputs:
+      pack_dir_artifact_id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          path: packages/engine-native/artifacts
+          merge-multiple: true
+      - name: Recreate the prepared native root manifest
+        working-directory: packages/engine-native
+        run: |
+          node scripts/extract-model.mjs
+          pnpm napi artifacts --npm-dir npm --output-dir artifacts
+          pnpm napi pre-publish -t npm --skip-optional-publish --no-gh-release
+
+      - name: Verify prepared package tarballs and native links
+        run: node scripts/check-packages.mjs --require-native-links
+
+      - id: pack
+        uses: changesets/action/pack@v2
+        with:
+          publish-plan-artifact-id: ${{ needs.select.outputs.publish_plan_artifact_id }}
+
+  verify-packed-release:
+    name: Verify exact Changesets tarballs
+    needs: [select, pack]
+    if: needs.select.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.pack.outputs.pack_dir_artifact_id }}
+          path: ${{ runner.temp }}/release-pack
+      - run: node scripts/check-packages.mjs --verify-pack-dir "$RUNNER_TEMP/release-pack" --require-native-links
+
+  publish:
+    name: Publish prepared packages with OIDC
+    needs: [select, pack, verify-packed-release]
+    if: needs.select.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      NPM_CONFIG_ACCESS: public
+      NPM_CONFIG_PROVENANCE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Install npm with trusted-publishing support
+        run: npm install --global npm@11.5.1
+      - run: pnpm install --frozen-lockfile
+      - uses: changesets/action/publish@v2
+        with:
+          pack-dir-artifact-id: ${{ needs.pack.outputs.pack_dir_artifact_id }}
+          create-github-releases: true
+          push-git-tags: true

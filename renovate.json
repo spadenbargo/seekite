@@ -1,0 +1,63 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Australia/Sydney",
+  "schedule": ["before 6am on Monday"],
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group compatible non-framework development dependency updates",
+      "matchDepTypes": ["devDependencies"],
+      "matchPackageNames": [
+        "!react",
+        "!react-dom",
+        "!next",
+        "!astro",
+        "!vitepress",
+        "!@docusaurus/**",
+        "!vite",
+        "!@vitejs/**"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "development dependencies",
+      "groupSlug": "dev-dependencies"
+    },
+    {
+      "description": "Keep framework and adapter peer updates independently bisectable",
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "next",
+        "astro",
+        "vitepress",
+        "@docusaurus/**",
+        "vite",
+        "@vitejs/**"
+      ],
+      "separateMajorMinor": true,
+      "separateMinorPatch": true,
+      "labels": ["dependencies", "framework"]
+    },
+    {
+      "description": "Group compatible Cargo dependency updates",
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Rust dependencies",
+      "groupSlug": "rust-dependencies"
+    },
+    {
+      "description": "Group compatible GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions"
+    },
+    {
+      "description": "Require manual approval for major dependency updates",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

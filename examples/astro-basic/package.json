@@ -1,0 +1,13 @@
+{
+  "name": "@seekite/example-astro-basic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@seekite/astro": "workspace:*",
+    "astro": "^6.4.8"
+  }
+}

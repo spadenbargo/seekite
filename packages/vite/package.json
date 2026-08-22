@@ -1,0 +1,55 @@
+{
+  "name": "@seekite/vite",
+  "version": "0.1.0-alpha.0",
+  "description": "Thin Vite integration for Seekite",
+  "keywords": [
+    "local-first",
+    "search",
+    "static-site",
+    "vite"
+  ],
+  "homepage": "https://seekite.dev/integrations/vite",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/vite"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

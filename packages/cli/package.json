@@ -1,0 +1,65 @@
+{
+  "name": "seekite",
+  "version": "0.1.0-alpha.0",
+  "description": "Build static, local-first browser search indexes",
+  "keywords": [
+    "cli",
+    "local-first",
+    "search",
+    "static-site"
+  ],
+  "homepage": "https://seekite.dev/docs/getting-started",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/cli"
+  },
+  "bin": {
+    "seekite": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.ts src/cli.ts --dts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*",
+    "@seekite/engine-native": "workspace:*",
+    "cac": "^6.7.14",
+    "chokidar": "^4.0.3"
+  },
+  "devDependencies": {
+    "@seekite/lab": "workspace:*"
+  },
+  "peerDependencies": {
+    "@seekite/lab": "^0.1.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@seekite/lab": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

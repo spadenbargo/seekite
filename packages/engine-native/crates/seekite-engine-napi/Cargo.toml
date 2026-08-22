@@ -1,0 +1,37 @@
+[package]
+name = "seekite-engine-napi"
+version = "0.1.0-alpha.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "napi-rs bindings for Seekite's ternlight embedding engine."
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# `default-features = false` is load-bearing: it turns OFF the engine's
+# `embedded_model` feature, so `include_bytes!("../assets/model.bin")` is not
+# compiled and the native addon carries no weights. Model bytes arrive at
+# runtime through `Engine::new`. `emb_int4` matches the shipped mini/base packs.
+seekite-embedding-engine = { path = "../../../embeddings-ternlight/native", default-features = false, features = [
+  "emb_int4",
+] }
+
+napi = { version = "3", default-features = false, features = ["napi4", "napi6"] }
+napi-derive = "3"
+# xxh64 only — the crate is feature-gated per algorithm, so this pulls in a
+# few hundred lines. Used for spec 06's incremental-build cache keys.
+xxhash-rust = { version = "0.8", features = ["xxh64"] }
+# Batch embedding parallelises across texts (never within one), so results stay
+# bit-identical to sequential `embed` calls.
+rayon = "1"
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
+strip = "symbols"

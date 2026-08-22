@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seekite vanilla example</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Seekite / vanilla browser API</p>
+      <h1>Search this page locally</h1>
+      <p>Seekite builds a static lexical and semantic index. Queries never leave your browser.</p>
+      <section class="search">
+        <label for="query">Try “offline search” or “portable index”</label>
+        <input id="query" type="search" placeholder="Search…" autocomplete="off" />
+        <ol id="results" aria-live="polite"></ol>
+      </section>
+      <h2>Offline by design</h2>
+      <p>
+        The browser downloads ordinary static assets. There is no search server, database, API key,
+        or network request per query.
+      </p>
+      <h2>Portable index files</h2>
+      <p>
+        Metadata, lexical postings, and optional float vectors are documented and independently
+        loadable for every corpus.
+      </p>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

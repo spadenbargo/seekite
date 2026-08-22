@@ -1,0 +1,45 @@
+{
+  "name": "@seekite/core",
+  "version": "0.1.0-alpha.0",
+  "description": "Framework-independent browser runtime and portable index types for Seekite",
+  "keywords": [
+    "browser",
+    "hybrid-search",
+    "local-first",
+    "search"
+  ],
+  "homepage": "https://seekite.dev/docs/architecture",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/core"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

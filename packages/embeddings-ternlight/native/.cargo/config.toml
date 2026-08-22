@@ -1,0 +1,15 @@
+# Per-target rustc flags for the engine crate.
+#
+# `+simd128` enables WASM SIMD instructions in the emitted .wasm. Combined
+# with the explicit intrinsics in `kernels::bitlinear_inner_simd`, this
+# guarantees SIMD execution on every compliant runtime (V8, Wasmtime,
+# JavaScriptCore, etc.) — not just whichever happens to auto-vectorize our
+# scalar loop. See docs/tern-runtime-perf.md → Phase B.
+#
+# WASM SIMD has been universally supported since 2021:
+#   - Node ≥ 16.4, Cloudflare Workers, Vercel Edge, Deno, Bun
+#   - Chrome 91+, Firefox 89+, Safari 16.4+
+# This is the "no scalar fallback" decision locked in B1.
+
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]

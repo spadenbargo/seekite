@@ -1,0 +1,81 @@
+name: Feature request
+description: Propose a concrete improvement to Seekite
+title: "[Feature]: "
+labels:
+  - enhancement
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please begin with the user problem. Design discussion is easier when the use case and constraints are clear.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for this request.
+          required: true
+        - label: This request is about one focused capability or outcome.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Who needs this, what are they trying to do, and what prevents it today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the observable API, workflow, or result rather than only its implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include current workarounds and why they are insufficient.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Likely affected area
+      options:
+        - Core search runtime
+        - Build pipeline
+        - CLI
+        - Vite integration
+        - Embedding provider
+        - Native engine
+        - Lab
+        - Search UI
+        - New integration or adapter
+        - Documentation
+        - Other or unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note any impact on the index format, `search.config.ts`, query API, bundle size, or supported runtimes.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, related projects, benchmarks, or prior art are welcome.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to help design or implement this feature.

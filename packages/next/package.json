@@ -1,0 +1,60 @@
+{
+  "name": "@seekite/next",
+  "version": "0.1.0-alpha.0",
+  "description": "Next.js postbuild integration for Seekite static search",
+  "keywords": [
+    "local-first",
+    "nextjs",
+    "search",
+    "static-export"
+  ],
+  "homepage": "https://seekite.dev/integrations/next",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/next"
+  },
+  "bin": {
+    "seekite-next": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.ts src/cli.ts --dts",
+    "build:plain": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0 <17.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

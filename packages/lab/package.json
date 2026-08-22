@@ -1,0 +1,49 @@
+{
+  "name": "@seekite/lab",
+  "version": "0.1.0-alpha.0",
+  "description": "Local quality and performance lab for Seekite indexes",
+  "keywords": [
+    "benchmark",
+    "evaluation",
+    "local-first",
+    "search"
+  ],
+  "homepage": "https://seekite.dev/playground",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/lab"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*",
+    "@seekite/core": "workspace:*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

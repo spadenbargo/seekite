@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Seekite multi-corpus</title>
+  </head>
+  <body>
+    <main>
+      <p>Multi-corpus example</p>
+      <h1>Load just what you need.</h1>
+      <div>
+        <button data-corpus="docs">Load docs</button><button data-corpus="tools">Load tools</button>
+      </div>
+      <input id="query" placeholder="Search loaded corpora" />
+      <p id="status">No corpus loaded.</p>
+      <ol id="results"></ol>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

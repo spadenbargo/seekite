@@ -1,0 +1,43 @@
+{
+  "name": "@seekite/engine-native-darwin-arm64",
+  "version": "0.1.0-alpha.0",
+  "description": "Native (napi-rs) build of Seekite's ternlight embedding engine",
+  "keywords": [
+    "arm64",
+    "darwin",
+    "embeddings",
+    "napi-rs"
+  ],
+  "homepage": "https://seekite.dev/docs/providers",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/engine-native/npm/darwin-arm64"
+  },
+  "files": [
+    "seekite-engine.darwin-arm64.node",
+    "README.md",
+    "LICENSE",
+    "TERNLIGHT-LICENSE"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "sideEffects": false,
+  "main": "seekite-engine.darwin-arm64.node",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "preferUnplugged": true
+}

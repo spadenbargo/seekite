@@ -1,0 +1,47 @@
+{
+  "name": "@seekite/engine-native-linux-x64-musl",
+  "version": "0.1.0-alpha.0",
+  "description": "Native (napi-rs) build of Seekite's ternlight embedding engine",
+  "keywords": [
+    "embeddings",
+    "linux",
+    "musl",
+    "napi-rs",
+    "x64"
+  ],
+  "homepage": "https://seekite.dev/docs/providers",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/engine-native/npm/linux-x64-musl"
+  },
+  "files": [
+    "seekite-engine.linux-x64-musl.node",
+    "README.md",
+    "LICENSE",
+    "TERNLIGHT-LICENSE"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "musl"
+  ],
+  "sideEffects": false,
+  "main": "seekite-engine.linux-x64-musl.node",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "preferUnplugged": true
+}

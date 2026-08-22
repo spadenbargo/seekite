@@ -1,0 +1,28 @@
+{
+  "name": "@seekite/example-vite-react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@seekite/core": "workspace:*",
+    "@seekite/embeddings-ternlight": "workspace:*",
+    "@seekite/react": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@seekite/vite": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "seekite": "workspace:*",
+    "typescript": "^5.9.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

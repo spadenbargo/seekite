@@ -1,0 +1,33 @@
+{
+  "name": "seekite-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "vp check",
+    "fix": "vp check --fix",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "bench:micro": "vp test bench",
+    "build": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./examples/*\" --filter \"./apps/*\" build",
+    "typecheck": "pnpm -r typecheck",
+    "docs:build": "vp run docs",
+    "package:hygiene": "node scripts/check-packages.mjs",
+    "changeset": "changeset",
+    "ci": "vp run pipeline"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@arethetypeswrong/core": "^0.18.5",
+    "@changesets/cli": "^3.0.1",
+    "@seekite/embeddings-ternlight": "workspace:*",
+    "@seekite/lab": "workspace:*",
+    "@types/node": "^24.0.0",
+    "publint": "^0.3.24",
+    "seekite": "workspace:*",
+    "tsdown": "0.22.14",
+    "typescript": "^5.9.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "packageManager": "pnpm@10.34.5"
+}

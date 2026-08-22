@@ -1,0 +1,255 @@
+name: engine-native
+
+# Cross-compile the six optional implementation packages and prove every
+# executable hosted-runner target agrees with the WASM provider. When called
+# by release.yml, this workflow publishes only the platform packages. The root
+# @seekite/engine-native package is packed and published later by Changesets,
+# after napi-rs has added exact optionalDependencies for these packages.
+
+on:
+  workflow_call:
+    inputs:
+      publish:
+        description: Publish parity-gated platform packages before the root package
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - "packages/engine-native/**"
+      - "packages/embeddings-ternlight/native/**"
+      - "scripts/check-packages.mjs"
+      - "scripts/package-contents.json"
+      - ".github/workflows/native.yml"
+  pull_request:
+    paths:
+      - "packages/engine-native/**"
+      - "packages/embeddings-ternlight/native/**"
+      - "scripts/check-packages.mjs"
+      - "scripts/package-contents.json"
+      - ".github/workflows/native.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engine-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: packages/engine-native
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            host: ubuntu-latest
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+          - target: aarch64-unknown-linux-gnu
+            host: ubuntu-latest
+            buildFlags: --use-napi-cross
+          - target: x86_64-unknown-linux-musl
+            host: ubuntu-latest
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+          - target: x86_64-apple-darwin
+            host: macos-latest
+          - target: aarch64-apple-darwin
+            host: macos-latest
+          - target: x86_64-pc-windows-msvc
+            host: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            packages/engine-native/crates/seekite-engine-napi
+            packages/embeddings-ternlight/native
+          key: ${{ matrix.target }}
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - run: node scripts/extract-model.mjs
+
+      - name: Build in the napi-rs compatibility container
+        if: matrix.docker
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.docker }}
+          options: --user 0:0 -v ${{ github.workspace }}:/build -w /build/packages/engine-native
+          run: |
+            set -eu
+            # The compatibility images ship Cargo 1.83, before Rust 2024 support.
+            # A fresh home avoids rustup's cross-device update failure on image layers.
+            rustup_bin=$(command -v rustup)
+            export RUSTUP_HOME=/tmp/seekite-rustup
+            "$rustup_bin" toolchain install stable --profile minimal --no-self-update
+            "$rustup_bin" default stable
+            # lts-alpine still carries Node 18; napi-rs CLI 3 requires Node 20.17+.
+            if [ "${{ matrix.target }}" = "x86_64-unknown-linux-musl" ]; then
+              apk update
+              apk add --no-cache --upgrade nodejs
+              export PATH="/usr/bin:$PATH"
+            fi
+            # Bypass the stale Corepack signing keys bundled by lts-debian.
+            ./node_modules/.bin/napi build --platform --release --target ${{ matrix.target }} --manifest-path crates/seekite-engine-napi/Cargo.toml --output-dir . --js binding.cjs --dts binding.d.ts
+
+      - name: Build
+        if: ${{ !matrix.docker }}
+        run: pnpm napi build --platform --release --target ${{ matrix.target }} ${{ matrix.buildFlags }} --manifest-path crates/seekite-engine-napi/Cargo.toml --output-dir . --js binding.cjs --dts binding.d.ts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.target }}
+          path: packages/engine-native/*.node
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    name: parity ${{ matrix.target }} / node ${{ matrix.node }}
+    needs: build
+    runs-on: ${{ matrix.host }}
+    env:
+      # Keep the action-pinned pnpm 10 from switching to the root pnpm 11 on Node 20.
+      npm_config_manage_package_manager_versions: "false"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, host: ubuntu-latest, node: 20 }
+          - { target: x86_64-unknown-linux-gnu, host: ubuntu-latest, node: 22 }
+          - { target: x86_64-unknown-linux-gnu, host: ubuntu-latest, node: 24 }
+          - { target: aarch64-apple-darwin, host: macos-latest, node: 20 }
+          - { target: aarch64-apple-darwin, host: macos-latest, node: 22 }
+          - { target: aarch64-apple-darwin, host: macos-latest, node: 24 }
+          - { target: x86_64-pc-windows-msvc, host: windows-latest, node: 20 }
+          - { target: x86_64-pc-windows-msvc, host: windows-latest, node: 22 }
+          - { target: x86_64-pc-windows-msvc, host: windows-latest, node: 24 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          # pnpm 11 requires Node 22.13+, but this matrix intentionally proves Node 20 support.
+          version: 10.34.5
+          package_json_file: packages/engine-native/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+      - run: node scripts/extract-model.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-${{ matrix.target }}
+          path: packages/engine-native
+      - name: Assert the prebuild loads
+        run: node -e "const m=require('./binding.cjs'); if(!m.Engine) throw new Error('binding did not expose Engine')"
+      - run: pnpm test
+        working-directory: .
+      - run: pnpm test
+        working-directory: .
+        env:
+          SEEKITE_DISABLE_NATIVE: "1"
+
+  publish-platforms:
+    name: publish platform packages
+    needs: test
+    if: ${{ inputs.publish == true && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NPM_CONFIG_ACCESS: public
+      NPM_CONFIG_PROVENANCE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install npm with trusted-publishing support
+        run: npm install --global npm@11.5.1
+        working-directory: .
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Run the complete release gate
+        run: pnpm run ci
+        working-directory: .
+      - name: Run the hard TypeScript gate
+        run: pnpm typecheck
+        working-directory: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          path: packages/engine-native/artifacts
+          merge-multiple: true
+
+      - run: node scripts/extract-model.mjs
+      - run: pnpm napi artifacts --npm-dir npm --output-dir artifacts
+      - run: pnpm build:ts
+      - name: Prepare version-matched platform manifests and root links
+        run: pnpm napi pre-publish -t npm --skip-optional-publish --no-gh-release
+
+      - name: Verify every prepared public package and native linkage
+        run: node scripts/check-packages.mjs --require-native-links
+        working-directory: .
+      - name: Pack and verify native platform tarballs
+        run: node scripts/check-packages.mjs --native-platforms-only --pack-destination "$RUNNER_TEMP/native-packages"
+        working-directory: .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-platform-tarballs
+          path: ${{ runner.temp }}/native-packages/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+      # npm trusted-publisher entries for every package must name release.yml:
+      # npm validates the calling workflow for reusable workflow jobs.
+      - name: Publish platform packages with OIDC
+        shell: bash
+        run: |
+          for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
+            read -r package_name package_version < <(
+              tar -xOzf "$tarball" package/package.json |
+                node -e "let value='';process.stdin.on('data',chunk=>value+=chunk).on('end',()=>{const pkg=JSON.parse(value);console.log(pkg.name+' '+pkg.version)})"
+            )
+            if npm view "$package_name@$package_version" version >/dev/null 2>&1; then
+              echo "$package_name@$package_version already exists; skipping"
+            else
+              npm publish "$tarball" --access public --provenance
+            fi
+          done
+        working-directory: .

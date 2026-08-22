@@ -1,0 +1,58 @@
+{
+  "name": "@seekite/astro",
+  "version": "0.1.0-alpha.0",
+  "description": "Astro integration for Seekite static search",
+  "keywords": [
+    "astro",
+    "local-first",
+    "search",
+    "static-site"
+  ],
+  "homepage": "https://seekite.dev/integrations/astro",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/astro"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "build:plain": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*",
+    "@seekite/vite": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": ">=4.0.0 <7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

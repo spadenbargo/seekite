@@ -1,0 +1,10 @@
+# The project currently has one maintainer. More specific ownership can be
+# distributed as maintainers are added under GOVERNANCE.md.
+* @spadenbargo
+
+/.github/ @spadenbargo
+/.changeset/ @spadenbargo
+/packages/core/ @spadenbargo
+/packages/build/ @spadenbargo
+/packages/engine-native/ @spadenbargo
+/packages/embeddings-ternlight/ @spadenbargo

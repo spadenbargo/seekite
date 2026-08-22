@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/soycaporal/ternlight",
+  "sourceVersion": "v0.1.1",
+  "sourceCommit": "c6d2c0a35d14c574ed2898b3dbf95977bca07208",
+  "artifacts": {
+    "mini/tern_engine_bg.wasm": "sha256-ec5e7595bd803e1ba70e05e07e920b065eee4a5376b94fee0821e9ac7a8716c1",
+    "base/tern_engine_bg.wasm": "sha256-27819b70b83fb24a493792db7bdf6b9cae4a1531df408809d1e57d580a3e9087"
+  }
+}

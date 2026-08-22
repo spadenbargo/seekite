@@ -1,0 +1,244 @@
+name: CI
+
+env:
+  # The installer supports VP_VERSION; keep the global CLI aligned with the
+  # exact vite-plus catalog pin in pnpm-workspace.yaml.
+  VP_VERSION: "0.2.9"
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_dry_run:
+        description: Run the full Changesets snapshot against ephemeral Verdaccio
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install vp (Vite+ CLI)
+        run: curl -fsSL https://vite.plus | bash
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run ci
+      # Vite+ lint runs with type-aware rules but not compiler diagnostics; a
+      # recursive tsc pass is the hard TypeScript gate.
+      - run: pnpm typecheck
+      - name: Assert @seekite/core dist stays dependency-free
+        run: |
+          if grep -nE 'from "|import\(' packages/core/dist/*.mjs; then
+            echo "::error::packages/core/dist imports an external specifier; @seekite/core must stay dependency-free"
+            exit 1
+          fi
+
+  # Fallback-path canary: proves the workspace does not require the global `vp`
+  # binary to be installed. `vite-plus` is a normal devDependency, so `vp check` /
+  # `vp test run` / `vp pack` all resolve through pnpm's local node_modules/.bin
+  # without the `curl | bash` install step above. This is the "no-vp contributor"
+  # smoke test the toolchain design promises.
+  #
+  # NOTE: this intentionally does NOT run the standalone `vitest` package directly
+  # (e.g. `pnpm exec vitest run`). Once `pnpm-workspace.yaml` overrides `vite` to
+  # `@voidzero-dev/vite-plus-core` (required for the rolldown-vite example builds
+  # and for `vp`'s own tooling), a plain `vitest` install becomes incompatible with
+  # that overridden `vite` and crashes at runtime. `vp test run` (via the local
+  # devDependency) is the supported no-global-vp test path instead.
+  fallback-no-global-vp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+
+  compatibility:
+    name: core/build/cli (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(github.ref == 'refs/heads/main' && '{"os":["ubuntu-latest","macos-latest","windows-latest"],"node":[20,22,24]}' || '{"include":[{"os":"ubuntu-latest","node":22},{"os":"windows-latest","node":20}]}') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pack protocol packages
+        run: pnpm --filter @seekite/core --filter @seekite/engine-native --filter @seekite/build --filter @seekite/lab --filter seekite build
+      - name: Use compatibility Node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Typecheck protocol packages
+        run: pnpm --filter @seekite/core --filter @seekite/build --filter seekite typecheck
+      - name: Test protocol packages
+        run: pnpm exec vp test run packages/core/src packages/build/src packages/cli/src
+
+  package-hygiene:
+    name: packed install smoke (${{ matrix.os }})
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build public packages
+        run: pnpm --filter "./packages/*" build
+      - name: Verify metadata, contents, types, budgets and blank install
+        run: pnpm package:hygiene
+
+  # Manual because this intentionally exercises every publish lifecycle and is
+  # heavier than a normal PR. Release managers run it before the first public
+  # release and after changing release/native automation. The non-host native
+  # files are metadata-only sentinels here; the real matrix above owns binary
+  # validity and parity.
+  release-dry-run:
+    name: Changesets snapshot to Verdaccio
+    if: github.event_name == 'workflow_dispatch' && inputs.release_dry_run
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create snapshot versions and build publishable packages
+        run: |
+          pnpm exec changeset version --snapshot ci
+          pnpm --filter "./packages/*" build
+
+      - name: Prepare native package metadata for the snapshot
+        run: |
+          node --input-type=module <<'NODE'
+          import { readdir, readFile, writeFile } from "node:fs/promises"
+          import path from "node:path"
+          const root = "packages/engine-native/npm"
+          for (const entry of await readdir(root, { withFileTypes: true })) {
+            if (!entry.isDirectory()) continue
+            const directory = path.join(root, entry.name)
+            const manifest = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"))
+            await writeFile(path.join(directory, manifest.main), new Uint8Array())
+          }
+          NODE
+          pnpm --dir packages/engine-native napi pre-publish -t npm --skip-optional-publish --no-gh-release
+
+      - name: Pack and verify the complete snapshot
+        run: |
+          node scripts/check-packages.mjs --require-native-links
+          node scripts/check-packages.mjs --native-platforms-only --pack-destination "$RUNNER_TEMP/native-packages"
+          pnpm exec changeset pack --out-dir "$RUNNER_TEMP/release-pack"
+          node scripts/check-packages.mjs --verify-pack-dir "$RUNNER_TEMP/release-pack" --require-native-links
+
+      - name: Start an ephemeral Verdaccio registry
+        run: |
+          cat > "$RUNNER_TEMP/verdaccio.yaml" <<'YAML'
+          storage: ./storage
+          auth:
+            htpasswd:
+              file: ./htpasswd
+          uplinks:
+            npmjs:
+              url: https://registry.npmjs.org/
+          packages:
+            '@*/*':
+              access: $all
+              publish: $all
+              unpublish: $all
+              proxy: npmjs
+            '**':
+              access: $all
+              publish: $all
+              unpublish: $all
+              proxy: npmjs
+          log:
+            type: stdout
+            format: pretty
+            level: warn
+          YAML
+          RUNNER_TRACKING_ID="" nohup pnpm dlx verdaccio@6.10.0 --config "$RUNNER_TEMP/verdaccio.yaml" --listen 127.0.0.1:4873 > "$RUNNER_TEMP/verdaccio.log" 2>&1 &
+          echo "VERDACCIO_PID=$!" >> "$GITHUB_ENV"
+          for _ in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4873/-/ping >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/verdaccio.log"
+          exit 1
+
+      - name: Publish platform packages, then the prepared Changesets tarballs
+        env:
+          NPM_CONFIG_REGISTRY: http://127.0.0.1:4873
+          NPM_CONFIG_PROVENANCE: "false"
+        run: |
+          for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
+            npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --provenance=false
+          done
+          pnpm exec changeset publish --from-pack-dir "$RUNNER_TEMP/release-pack"
+
+      - name: Install the snapshot back from Verdaccio
+        env:
+          NPM_CONFIG_REGISTRY: http://127.0.0.1:4873
+          SEEKITE_DISABLE_NATIVE: "1"
+        run: |
+          mkdir "$RUNNER_TEMP/registry-smoke"
+          cd "$RUNNER_TEMP/registry-smoke"
+          node --input-type=module <<'NODE'
+          import { readdir, readFile, writeFile } from "node:fs/promises"
+          import path from "node:path"
+          const dependencies = { react: "19.2.8", "react-dom": "19.2.8", vite: "8.2.2" }
+          for (const entry of await readdir(process.env.GITHUB_WORKSPACE + "/packages", { withFileTypes: true })) {
+            if (!entry.isDirectory()) continue
+            const file = path.join(process.env.GITHUB_WORKSPACE, "packages", entry.name, "package.json")
+            let manifest
+            try { manifest = JSON.parse(await readFile(file, "utf8")) } catch { continue }
+            if (!manifest.private) dependencies[manifest.name] = manifest.version
+          }
+          await writeFile("package.json", JSON.stringify({ name: "seekite-registry-smoke", private: true, type: "module", dependencies }, null, 2))
+          await writeFile("smoke.mjs", Object.keys(dependencies).filter(name => name.includes("seekite")).map(name => `await import(${JSON.stringify(name)})`).join("\n"))
+          await writeFile("index.html", '<script type="module" src="/src.js"></script>')
+          await writeFile("src.js", 'import "@seekite/core"\nimport "@seekite/embeddings-ternlight"\nimport "@seekite/search-ui"\nimport "@seekite/react"\n')
+          NODE
+          npm install --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+          node smoke.mjs
+          npx vite build
+
+      - name: Stop Verdaccio
+        if: always()
+        run: |
+          if [ -n "${VERDACCIO_PID:-}" ]; then
+            kill "$VERDACCIO_PID" || true
+          fi
+          if [ "${{ job.status }}" != "success" ]; then
+            cat "$RUNNER_TEMP/verdaccio.log" || true
+          fi

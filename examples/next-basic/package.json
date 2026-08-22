@@ -1,0 +1,20 @@
+{
+  "name": "@seekite/example-next-basic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "postbuild": "node ../../packages/next/dist/cli.mjs build",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@seekite/next": "workspace:*",
+    "next": "^16.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

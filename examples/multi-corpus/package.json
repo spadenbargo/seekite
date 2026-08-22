@@ -1,0 +1,21 @@
+{
+  "name": "@seekite/example-multi-corpus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "node ../../packages/cli/dist/cli.mjs build --output public/search && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@seekite/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@seekite/vite": "workspace:*",
+    "seekite": "workspace:*",
+    "typescript": "^5.9.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

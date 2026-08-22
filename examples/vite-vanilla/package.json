@@ -1,0 +1,23 @@
+{
+  "name": "@seekite/example-vite-vanilla",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "node ../../packages/cli/dist/cli.mjs build && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@seekite/core": "workspace:*",
+    "@seekite/embeddings-ternlight": "workspace:*",
+    "@seekite/search-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@seekite/vite": "workspace:*",
+    "seekite": "workspace:*",
+    "typescript": "^5.9.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

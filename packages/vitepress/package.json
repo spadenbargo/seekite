@@ -1,0 +1,80 @@
+{
+  "name": "@seekite/vitepress",
+  "version": "0.1.0-alpha.0",
+  "description": "VitePress integration and headless theme bindings for Seekite",
+  "keywords": [
+    "documentation",
+    "local-first",
+    "search",
+    "vitepress"
+  ],
+  "homepage": "https://seekite.dev/integrations/vitepress",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/vitepress"
+  },
+  "files": [
+    "dist",
+    "style.css",
+    "style.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./style.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./theme": {
+      "types": "./dist/theme.d.mts",
+      "import": "./dist/theme.mjs"
+    },
+    "./style.css": {
+      "types": "./style.d.ts",
+      "default": "./style.css"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.ts src/theme.ts --dts",
+    "build:plain": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*",
+    "@seekite/core": "workspace:*",
+    "@seekite/search-ui": "workspace:*",
+    "@seekite/vite": "workspace:*"
+  },
+  "devDependencies": {
+    "@vue/server-renderer": "^3.5.41",
+    "vue": "^3.5.41"
+  },
+  "peerDependencies": {
+    "vitepress": ">=1.0.0 <3.0.0",
+    "vue": ">=3.4.0 <4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitepress": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

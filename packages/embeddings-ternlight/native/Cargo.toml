@@ -1,0 +1,37 @@
+[package]
+name        = "seekite-embedding-engine"
+version     = "0.1.0-alpha.0"
+edition     = "2024"
+license     = "MIT"
+repository  = "https://github.com/spadenbargo/seekite"
+description = "Seekite's in-repository Rust/Wasm local embedding engine."
+
+[lib]
+name = "tern_engine"
+crate-type = ["cdylib", "rlib"]
+
+# Embedding-format Cargo features. Mutually exclusive — enforced at compile time
+# via compile_error!() in src/lib.rs. Exactly one must be selected per build.
+# See docs/tern-inference-engine.md "Build targets" for the spec.
+[features]
+# `embedded_model` bakes `assets/model.bin` into the artifact via include_bytes!.
+# ON by default so the wasm build (`wasm-pack build --features emb_int4`) is
+# unchanged. The native napi addon depends on this crate with
+# `default-features = false` and hands the packed bytes in at runtime instead —
+# see `model::LoadedModel::from_bytes`.
+default        = ["embedded_model"]
+embedded_model = []
+emb_fp32       = []
+emb_int8       = []
+emb_ternary    = []
+emb_int4       = []   # wire-format id=3; the shipped mini/base packs use this
+
+[dependencies]
+wasm-bindgen = "0.2"
+# HF tokenizers — pure-Rust regex (no `onig` C dep), no `esaxx_fast`, `unstable_wasm` enables
+# the wasm32 target. rayon is only used by encode_batch(), which we never call.
+tokenizers   = { version = "0.19", default-features = false, features = ["unstable_wasm", "fancy-regex"] }
+# SHA256 for verifying the trailing 32 bytes of the .bin.
+sha2         = { version = "0.10", default-features = false }
+# erff for GELU — matches torch's `F.gelu(approximate='none')` (the default).
+libm         = { version = "0.2", default-features = false }

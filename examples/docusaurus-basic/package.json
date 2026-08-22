@@ -1,0 +1,15 @@
+{
+  "name": "@seekite/example-docusaurus-basic",
+  "private": true,
+  "scripts": {
+    "build": "docusaurus build",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.10.2",
+    "@mdx-js/react": "^3.1.1",
+    "@seekite/docusaurus": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

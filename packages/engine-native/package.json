@@ -1,0 +1,78 @@
+{
+  "name": "@seekite/engine-native",
+  "version": "0.1.0-alpha.0",
+  "description": "Native (napi-rs) build of Seekite's ternlight embedding engine",
+  "keywords": [
+    "embeddings",
+    "local-first",
+    "napi-rs",
+    "search"
+  ],
+  "homepage": "https://seekite.dev/docs/providers",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/engine-native"
+  },
+  "files": [
+    "dist",
+    "models",
+    "binding.cjs",
+    "binding.d.ts",
+    "crates/seekite-engine-napi/Cargo.toml",
+    "crates/seekite-engine-napi/Cargo.lock",
+    "crates/seekite-engine-napi/build.rs",
+    "crates/seekite-engine-napi/src",
+    "scripts/extract-model.mjs",
+    "README.md",
+    "LICENSE",
+    "TERNLIGHT-LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "build:plain": "tsdown",
+    "build:native": "napi build --platform --release --manifest-path crates/seekite-engine-napi/Cargo.toml --output-dir . --js binding.cjs --dts binding.d.ts",
+    "build:debug": "napi build --platform --manifest-path crates/seekite-engine-napi/Cargo.toml --output-dir . --js binding.cjs --dts binding.d.ts && tsc -p tsconfig.json",
+    "build:ts": "vp pack",
+    "extract-models": "node scripts/extract-model.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "artifacts": "napi artifacts",
+    "prepublishOnly": "napi prepublish -t npm"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.8.6"
+  },
+  "napi": {
+    "binaryName": "seekite-engine",
+    "packageName": "@seekite/engine-native",
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

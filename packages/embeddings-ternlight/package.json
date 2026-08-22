@@ -1,0 +1,80 @@
+{
+  "name": "@seekite/embeddings-ternlight",
+  "version": "0.1.0-alpha.0",
+  "description": "Seekite-owned Rust/WASM local embedding provider",
+  "keywords": [
+    "embeddings",
+    "local-first",
+    "search",
+    "wasm"
+  ],
+  "homepage": "https://seekite.dev/docs/providers",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/embeddings-ternlight"
+  },
+  "files": [
+    "dist",
+    "wasm",
+    "native/.cargo",
+    "native/assets/tokenizer.json",
+    "native/src",
+    "native/Cargo.lock",
+    "native/Cargo.toml",
+    "native/README.md",
+    "scripts/build-wasm.sh",
+    "README.md",
+    "LICENSE",
+    "TERNLIGHT-LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./wasm/*/bundler/tern_engine.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.browser.d.mts",
+      "browser": "./dist/index.browser.mjs",
+      "node": "./dist/index.node.mjs",
+      "import": "./dist/index.browser.mjs"
+    },
+    "./base": {
+      "types": "./dist/base.browser.d.mts",
+      "browser": "./dist/base.browser.mjs",
+      "node": "./dist/base.node.mjs",
+      "import": "./dist/base.browser.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.browser.ts src/index.node.ts src/base.browser.ts src/base.node.ts --platform node --target es2022",
+    "build:plain": "tsdown",
+    "build:wasm": "bash ./scripts/build-wasm.sh",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@seekite/engine-native": "workspace:*"
+  },
+  "peerDependencies": {
+    "@seekite/engine-native": "^0.1.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@seekite/engine-native": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "@seekite/docusaurus",
+  "version": "0.1.0-alpha.0",
+  "description": "Docusaurus postbuild integration for Seekite static search",
+  "keywords": [
+    "docusaurus",
+    "local-first",
+    "search",
+    "static-site"
+  ],
+  "homepage": "https://seekite.dev/integrations/docusaurus",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/docusaurus"
+  },
+  "files": [
+    "dist",
+    "theme",
+    "load-build.cjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./theme/SearchBar.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./theme": {
+      "types": "./dist/theme.d.mts",
+      "import": "./dist/theme.mjs",
+      "default": "./dist/theme.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.ts src/theme.tsx --dts",
+    "build:plain": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/build": "workspace:*",
+    "@seekite/core": "workspace:*",
+    "@seekite/react": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "peerDependencies": {
+    "@docusaurus/core": ">=3.0.0 <5.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@docusaurus/core": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

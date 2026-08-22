@@ -1,0 +1,42 @@
+:root {
+  font-family: Georgia, serif;
+  color: #241f1a;
+  background: #f4eee5;
+}
+main {
+  width: min(760px, calc(100% - 3rem));
+  margin: 8rem auto;
+}
+span {
+  font-family: ui-monospace, monospace;
+  color: #865b37;
+}
+h1 {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 1;
+  font-weight: 500;
+}
+.search-trigger {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  width: min(26rem, 100%);
+  box-sizing: border-box;
+  border: 2px solid;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  color: inherit;
+  background: #fffaf4;
+  font:
+    1.1rem Georgia,
+    serif;
+  cursor: pointer;
+}
+kbd {
+  border: 1px solid #ae9b89;
+  border-radius: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  font:
+    0.85rem ui-monospace,
+    monospace;
+}

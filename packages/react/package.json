@@ -1,0 +1,68 @@
+{
+  "name": "@seekite/react",
+  "version": "0.1.0-alpha.0",
+  "description": "Accessible React search components for Seekite",
+  "keywords": [
+    "accessibility",
+    "local-first",
+    "react",
+    "search"
+  ],
+  "homepage": "https://seekite.dev/docs/getting-started",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/react"
+  },
+  "files": [
+    "dist",
+    "style.css",
+    "style.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./style.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./style.css": {
+      "types": "./style.d.ts",
+      "default": "./style.css"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/search-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^26.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,106 @@
+name: Bug report
+description: Report a reproducible problem with Seekite
+title: "[Bug]: "
+labels:
+  - bug
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Seekite. Please use a [private security advisory](https://github.com/spadenbargo/seekite/security/advisories/new) instead if the report could expose users or data.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open and closed issues for this problem.
+          required: true
+        - label: I can reproduce this with a currently supported Seekite release.
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Seekite version
+      description: Include the versions of all relevant `@seekite/*` packages.
+      placeholder: "@seekite/core 0.x.y, seekite 0.x.y"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Core search runtime
+        - Build pipeline
+        - CLI
+        - Vite integration
+        - Embedding provider
+        - Native engine
+        - Lab
+        - Search UI
+        - Other or unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Node.js, package manager, browser, and framework/build-tool versions where relevant.
+      placeholder: |
+        OS: macOS 15
+        Node: 22.x
+        pnpm: 11.x
+        Browser: Chrome 140
+        Framework/build tool: Vite 7
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Link a minimal repository or provide exact commands and files that reproduce the problem.
+      placeholder: |
+        1. Clone ...
+        2. Run ...
+        3. Search for ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove secrets, private document content, and credentials before posting.
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to submit a focused pull request for this bug.

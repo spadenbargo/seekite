@@ -1,0 +1,48 @@
+{
+  "name": "create-seekite",
+  "version": "0.1.0-alpha.0",
+  "description": "Scaffold a Seekite-powered Vite search app",
+  "keywords": [
+    "create",
+    "local-first",
+    "search",
+    "vite"
+  ],
+  "homepage": "https://seekite.dev/docs/getting-started",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/create-seekite"
+  },
+  "bin": {
+    "create-seekite": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack src/index.ts src/cli.ts --dts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

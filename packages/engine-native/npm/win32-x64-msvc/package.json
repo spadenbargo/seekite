@@ -1,0 +1,43 @@
+{
+  "name": "@seekite/engine-native-win32-x64-msvc",
+  "version": "0.1.0-alpha.0",
+  "description": "Native (napi-rs) build of Seekite's ternlight embedding engine",
+  "keywords": [
+    "embeddings",
+    "napi-rs",
+    "windows",
+    "x64"
+  ],
+  "homepage": "https://seekite.dev/docs/providers",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/engine-native/npm/win32-x64-msvc"
+  },
+  "files": [
+    "seekite-engine.win32-x64-msvc.node",
+    "README.md",
+    "LICENSE",
+    "TERNLIGHT-LICENSE"
+  ],
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "sideEffects": false,
+  "main": "seekite-engine.win32-x64-msvc.node",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "preferUnplugged": true
+}

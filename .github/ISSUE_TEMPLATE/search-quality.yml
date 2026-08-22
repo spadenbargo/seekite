@@ -1,0 +1,105 @@
+name: Search-quality report
+description: Report a reproducible ranking or retrieval-quality problem
+title: "[Search quality]: "
+labels:
+  - search-quality
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search-quality reports are most useful when they include a small shareable corpus and benchmark output. Do not upload private or sensitive documents.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing search-quality reports for this query pattern.
+          required: true
+        - label: I have permission to share every query, document excerpt, and benchmark artifact in this report.
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Seekite and provider versions
+      placeholder: "@seekite/core 0.x.y, @seekite/embeddings-ternlight 0.x.y"
+    validations:
+      required: true
+
+  - type: textarea
+    id: corpus
+    attributes:
+      label: Corpus
+      description: Give the document count, resulting chunk count, language(s), approximate size, and content type.
+      placeholder: |
+        Documents: 500 Markdown files
+        Chunks: 3,200
+        Language: English
+        Size/content: 8 MiB of API documentation
+    validations:
+      required: true
+
+  - type: input
+    id: query
+    attributes:
+      label: Exact query
+      description: Preserve spelling, punctuation, and casing.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Search mode
+      options:
+        - Hybrid
+        - Lexical
+        - Semantic
+        - Other or unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Include analyzer, chunking, model/provider, weighting, and limits. Remove secrets.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected ranking
+      description: List the relevant documents/chunks and the positions you expected, with a short relevance explanation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual ranking
+      description: List the returned documents/chunks, ranks, and scores when available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: "seekite bench run file"
+      description: Drag in the JSON run file, or paste the exact command and summary. A baseline comparison is especially useful.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Shareable reproduction
+      description: Link a minimal corpus/config repository or paste representative synthetic documents.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Note whether the problem is stable across repeated builds or specific to a browser/runtime.
