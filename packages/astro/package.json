@@ -45,7 +45,7 @@
     "@seekite/vite": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=4.0.0 <7.0.0"
+    "astro": ">=4.0.0 <8.0.0"
   },
   "peerDependenciesMeta": {
     "astro": {
