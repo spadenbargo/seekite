@@ -153,7 +153,7 @@ jobs:
             await writeFile(path.join(directory, manifest.main), new Uint8Array())
           }
           NODE
-          pnpm --dir packages/engine-native napi pre-publish -t npm --skip-optional-publish --no-gh-release
+          pnpm --filter @seekite/engine-native exec napi pre-publish -t npm --skip-optional-publish --no-gh-release
 
       - name: Pack and verify the complete snapshot
         run: |
