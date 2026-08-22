@@ -216,6 +216,15 @@ jobs:
           NPM_CONFIG_REGISTRY: http://127.0.0.1:4873
           NPM_CONFIG_PROVENANCE: "false"
         run: |
+          auth_response=$(curl --fail --silent --request PUT \
+            --header 'content-type: application/json' \
+            --data '{"name":"seekite-ci","password":"seekite-ci-password","email":"ci@example.invalid","type":"user"}' \
+            "$NPM_CONFIG_REGISTRY/-/user/org.couchdb.user:seekite-ci")
+          auth_token=$(printf '%s' "$auth_response" | node -e "let value='';process.stdin.on('data',chunk=>value+=chunk).on('end',()=>{const result=JSON.parse(value);if(!result.token)process.exit(1);process.stdout.write(result.token)})")
+          npm_userconfig="$RUNNER_TEMP/verdaccio.npmrc"
+          npm config set //127.0.0.1:4873/:_authToken "$auth_token" --userconfig "$npm_userconfig"
+          export npm_config_userconfig="$npm_userconfig"
+
           npm_tag=$(node -e "try { const pre=require('./.changeset/pre.json'); console.log(pre.mode === 'pre' ? pre.tag : 'latest') } catch { console.log('latest') }")
           for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
             npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
