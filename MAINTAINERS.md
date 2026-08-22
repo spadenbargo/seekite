@@ -20,6 +20,11 @@ The project currently has one maintainer, so `main` requires a pull request and
 passing checks but not a second approval. Add a required CODEOWNER approval as
 soon as a second release-capable maintainer exists.
 
+Repository Actions permissions are read-only by default. GitHub's combined
+**Allow GitHub Actions to create and approve pull requests** switch is enabled
+only so the narrowly scoped Changesets version job can open its release pull
+request. Project workflows must never approve or merge their own pull requests.
+
 ## npm release flow
 
 Seekite uses Changesets in `alpha` prerelease mode. A contributor adds a
