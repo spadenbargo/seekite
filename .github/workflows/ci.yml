@@ -173,6 +173,18 @@ jobs:
             npmjs:
               url: https://registry.npmjs.org/
           packages:
+            '@seekite/*':
+              access: $all
+              publish: $all
+              unpublish: $all
+            'seekite':
+              access: $all
+              publish: $all
+              unpublish: $all
+            'create-seekite':
+              access: $all
+              publish: $all
+              unpublish: $all
             '@*/*':
               access: $all
               publish: $all
@@ -204,8 +216,9 @@ jobs:
           NPM_CONFIG_REGISTRY: http://127.0.0.1:4873
           NPM_CONFIG_PROVENANCE: "false"
         run: |
+          npm_tag=$(node -e "try { const pre=require('./.changeset/pre.json'); console.log(pre.mode === 'pre' ? pre.tag : 'latest') } catch { console.log('latest') }")
           for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
-            npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --provenance=false
+            npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
           done
           pnpm exec changeset publish --from-pack-dir "$RUNNER_TEMP/release-pack"
 
