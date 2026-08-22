@@ -251,7 +251,13 @@ jobs:
             if npm view "$package_name@$package_version" version >/dev/null 2>&1; then
               echo "$package_name@$package_version already exists; skipping"
             else
-              npm publish "$tarball" --access public --provenance
+              npm_tag=latest
+              if [[ "$package_version" == *-* ]]; then
+                npm_tag=${package_version#*-}
+                npm_tag=${npm_tag%%.*}
+              fi
+              echo "Publishing $package_name@$package_version with dist-tag $npm_tag"
+              npm publish "$tarball" --access public --tag "$npm_tag" --provenance
             fi
           done
         working-directory: .

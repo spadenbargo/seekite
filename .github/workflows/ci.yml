@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -130,9 +131,13 @@ jobs:
           node-version: 24
       - run: pnpm install --frozen-lockfile
 
-      - name: Create snapshot versions and build publishable packages
+      - name: Create releasable versions and build publishable packages
         run: |
-          pnpm exec changeset version --snapshot ci
+          if node -e "const pre=require('./.changeset/pre.json'); process.exit(pre.mode === 'pre' ? 0 : 1)" 2>/dev/null; then
+            echo "Changesets prerelease mode is active; testing the committed prerelease versions"
+          else
+            pnpm exec changeset version --snapshot ci
+          fi
           pnpm --filter "./packages/*" build
 
       - name: Prepare native package metadata for the snapshot
@@ -148,7 +153,7 @@ jobs:
             await writeFile(path.join(directory, manifest.main), new Uint8Array())
           }
           NODE
-          pnpm --dir packages/engine-native napi pre-publish -t npm --skip-optional-publish --no-gh-release
+          pnpm --filter @seekite/engine-native exec napi pre-publish -t npm --skip-optional-publish --no-gh-release
 
       - name: Pack and verify the complete snapshot
         run: |
@@ -161,6 +166,9 @@ jobs:
         run: |
           cat > "$RUNNER_TEMP/verdaccio.yaml" <<'YAML'
           storage: ./storage
+          # npm sends tarballs inside JSON, so the 10 MB native package exceeds
+          # Verdaccio's default 10 MB request-body limit after base64 encoding.
+          max_body_size: 25mb
           auth:
             htpasswd:
               file: ./htpasswd
@@ -168,6 +176,18 @@ jobs:
             npmjs:
               url: https://registry.npmjs.org/
           packages:
+            '@seekite/*':
+              access: $all
+              publish: $all
+              unpublish: $all
+            'seekite':
+              access: $all
+              publish: $all
+              unpublish: $all
+            'create-seekite':
+              access: $all
+              publish: $all
+              unpublish: $all
             '@*/*':
               access: $all
               publish: $all
@@ -199,10 +219,26 @@ jobs:
           NPM_CONFIG_REGISTRY: http://127.0.0.1:4873
           NPM_CONFIG_PROVENANCE: "false"
         run: |
+          auth_response=$(curl --fail --silent --request PUT \
+            --header 'content-type: application/json' \
+            --data '{"name":"seekite-ci","password":"seekite-ci-password","email":"ci@example.invalid","type":"user"}' \
+            "$NPM_CONFIG_REGISTRY/-/user/org.couchdb.user:seekite-ci")
+          auth_token=$(printf '%s' "$auth_response" | node -e "let value='';process.stdin.on('data',chunk=>value+=chunk).on('end',()=>{const result=JSON.parse(value);if(!result.token)process.exit(1);process.stdout.write(result.token)})")
+          npm_userconfig="$RUNNER_TEMP/verdaccio.npmrc"
+          npm config set //127.0.0.1:4873/:_authToken "$auth_token" --userconfig "$npm_userconfig"
+          export npm_config_userconfig="$npm_userconfig"
+
+          npm_tag=$(node -e "try { const pre=require('./.changeset/pre.json'); console.log(pre.mode === 'pre' ? pre.tag : 'latest') } catch { console.log('latest') }")
           for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
-            npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --provenance=false
+            npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
           done
-          pnpm exec changeset publish --from-pack-dir "$RUNNER_TEMP/release-pack"
+          jq -r '.plan[][] | [.tarball.path, .tag] | @tsv' "$RUNNER_TEMP/release-pack/publish-plan.json" |
+            while IFS=$'\t' read -r tarball tag; do
+              npm publish "$RUNNER_TEMP/release-pack/$tarball" \
+                --registry "$NPM_CONFIG_REGISTRY" \
+                --tag "$tag" \
+                --provenance=false
+            done
 
       - name: Install the snapshot back from Verdaccio
         env:

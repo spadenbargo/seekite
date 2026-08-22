@@ -8,7 +8,7 @@
     "search",
     "vitepress"
   ],
-  "homepage": "https://seekite.dev/integrations/vitepress",
+  "homepage": "https://seekite-docs.baden-spargo.workers.dev/docs/integrations/vitepress",
   "bugs": {
     "url": "https://github.com/spadenbargo/seekite/issues"
   },
