@@ -8,7 +8,7 @@
     "local-first",
     "search"
   ],
-  "homepage": "https://seekite.dev/docs/architecture",
+  "homepage": "https://seekite-docs.baden-spargo.workers.dev/docs/architecture",
   "bugs": {
     "url": "https://github.com/spadenbargo/seekite/issues"
   },

@@ -132,7 +132,7 @@ function validateMetadata({ directory, manifest, nativePlatform }) {
     errors.push("bugs.url is incorrect");
   if (
     typeof manifest.homepage !== "string" ||
-    !manifest.homepage.startsWith("https://seekite.dev/")
+    !manifest.homepage.startsWith("https://seekite-docs.baden-spargo.workers.dev/")
   ) {
     errors.push("homepage must point at seekite.dev");
   }

@@ -8,7 +8,7 @@
     "static-site",
     "vite"
   ],
-  "homepage": "https://seekite.dev/integrations/vite",
+  "homepage": "https://seekite-docs.baden-spargo.workers.dev/integrations/vite",
   "bugs": {
     "url": "https://github.com/spadenbargo/seekite/issues"
   },
