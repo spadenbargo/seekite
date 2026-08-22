@@ -132,9 +132,9 @@ function validateMetadata({ directory, manifest, nativePlatform }) {
     errors.push("bugs.url is incorrect");
   if (
     typeof manifest.homepage !== "string" ||
-    !manifest.homepage.startsWith("https://seekite-docs.baden-spargo.workers.dev/")
+    !manifest.homepage.startsWith("https://seekite.badenspargo.com/")
   ) {
-    errors.push("homepage must point at seekite.dev");
+    errors.push("homepage must point at seekite.badenspargo.com");
   }
   if (!Array.isArray(manifest.keywords) || manifest.keywords.length === 0)
     errors.push("keywords must be non-empty");

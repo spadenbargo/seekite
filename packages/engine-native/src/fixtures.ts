@@ -78,7 +78,7 @@ export const PARITY_FIXTURES: readonly string[] = [
   "🙂🙃😀😃😄😁😆😅🤣😂 a run of emoji with no words at all",
 
   // ── structured text ───────────────────────────────────────────────────────
-  "https://seekite-docs.baden-spargo.workers.dev/docs/getting-started#install",
+  "https://seekite.badenspargo.com/docs/getting-started#install",
   "const engine = createNativeEngine({ model: 'mini' })",
   "SELECT id, title FROM documents WHERE rank > 0.5 ORDER BY rank DESC;",
   "3.14159265358979 2.71828182845905 1.61803398874989",

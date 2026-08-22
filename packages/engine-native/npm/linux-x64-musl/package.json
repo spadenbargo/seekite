@@ -9,7 +9,7 @@
     "napi-rs",
     "x64"
   ],
-  "homepage": "https://seekite-docs.baden-spargo.workers.dev/docs/providers",
+  "homepage": "https://seekite.badenspargo.com/docs/providers",
   "bugs": {
     "url": "https://github.com/spadenbargo/seekite/issues"
   },
