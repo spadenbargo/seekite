@@ -50,9 +50,15 @@
     {
       "description": "Group compatible GitHub Actions updates",
       "matchManagers": ["github-actions"],
+      "pinDigests": true,
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions"
+    },
+    {
+      "description": "Pin release container images by digest",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
     },
     {
       "description": "Require manual approval for major dependency updates",

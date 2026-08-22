@@ -1,17 +1,10 @@
 name: Release
 
 on:
-  # Keep publishing inert until the npm trusted-publishing relationships and
-  # GitHub environment protections have been configured for every package.
-  # When the project is ready, restore the push-to-main trigger and remove the
-  # activation guard from the select job.
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      activate_release:
-        description: Run the release state machine
-        required: true
-        default: false
-        type: boolean
 
 concurrency:
   group: release-${{ github.ref }}
@@ -23,49 +16,51 @@ permissions:
 jobs:
   select:
     name: Select version or publish mode
-    if: inputs.activate_release && github.ref == 'refs/heads/main'
+    if: vars.NPM_RELEASES_ENABLED == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       mode: ${{ steps.select.outputs.mode }}
       publish_plan_artifact_id: ${{ steps.select.outputs.publish-plan-artifact-id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
       - id: select
-        uses: changesets/action/select-mode@v2
+        uses: changesets/action/select-mode@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
 
   version:
     name: Open or update the Version Packages pull request
     needs: select
     if: needs.select.outputs.mode == 'version'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
-      - uses: changesets/action/version@v2
+      - uses: changesets/action/version@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           script: pnpm exec changeset version
           commit-message: "chore(release): version packages"
           pr-title: "chore(release): version packages"
 
   # This reusable matrix publishes only napi-rs platform packages. Its parity,
-  # metadata, tarball and blank-install gates must finish before Changesets is
-  # allowed to pack the prepared root package.
+  # metadata, tarball and blank-install gates must finish before Changesets can
+  # pack the prepared root package.
   native:
     name: Publish native platform packages first
     needs: select
@@ -82,20 +77,21 @@ jobs:
     needs: [select, native]
     if: needs.select.outputs.mode == 'publish'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     outputs:
       pack_dir_artifact_id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           pattern: bindings-*
           path: packages/engine-native/artifacts
@@ -111,7 +107,7 @@ jobs:
         run: node scripts/check-packages.mjs --require-native-links
 
       - id: pack
-        uses: changesets/action/pack@v2
+        uses: changesets/action/pack@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           publish-plan-artifact-id: ${{ needs.select.outputs.publish_plan_artifact_id }}
 
@@ -120,24 +116,27 @@ jobs:
     needs: [select, pack]
     if: needs.select.outputs.mode == 'publish'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           artifact-ids: ${{ needs.pack.outputs.pack_dir_artifact_id }}
           path: ${{ runner.temp }}/release-pack
       - run: node scripts/check-packages.mjs --verify-pack-dir "$RUNNER_TEMP/release-pack" --require-native-links
 
   publish:
-    name: Publish prepared packages with OIDC
+    name: Publish prepared packages with npm OIDC
     needs: [select, pack, verify-packed-release]
     if: needs.select.outputs.mode == 'publish'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
     permissions:
       contents: write
       id-token: write
@@ -145,18 +144,19 @@ jobs:
       NPM_CONFIG_ACCESS: public
       NPM_CONFIG_PROVENANCE: "true"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
       - name: Install npm with trusted-publishing support
-        run: npm install --global npm@11.5.1
+        run: npm install --global npm@11.19.0
       - run: pnpm install --frozen-lockfile
-      - uses: changesets/action/publish@v2
+      - uses: changesets/action/publish@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack_dir_artifact_id }}
           create-github-releases: true
