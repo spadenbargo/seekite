@@ -1,0 +1,145 @@
+name: Search benchmarks
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  beir:
+    name: BEIR lexical quality
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      BEIR_CACHE_DIR: ${{ github.workspace }}/.cache/beir
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Restore pinned BEIR datasets
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: .cache/beir
+          key: beir-scifact-nfcorpus-arguana-${{ hashFiles('bench/beir/src/**', 'bench/beir/package.json', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            beir-scifact-nfcorpus-arguana-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run same-machine lexical quality suite
+        run: >-
+          pnpm --filter @seekite/bench-beir run bench --
+          --datasets scifact,nfcorpus,arguana
+          --engines seekite,zbsearch,orama
+          --candidates lexical
+          --out "$RUNNER_TEMP/beir-results"
+          --check
+
+      - name: Publish benchmark summary
+        if: always()
+        shell: bash
+        run: |
+          report=$(find "$RUNNER_TEMP/beir-results" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null || true)
+          if [ -n "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The BEIR run failed before it could write a Markdown report." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: beir-results-${{ github.run_id }}
+          path: ${{ runner.temp }}/beir-results
+          if-no-files-found: warn
+          retention-days: 90
+
+  docs-corpus:
+    name: Docs-corpus regression
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-benchmarks')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Restore docs embedding cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: .seekite/cache
+          key: docs-bench-embeddings-${{ runner.os }}-${{ hashFiles('docs/**/*.md', 'search.config.ts', 'packages/embeddings-ternlight/src/**') }}
+          restore-keys: |
+            docs-bench-embeddings-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+      - name: Build benchmark dependencies
+        run: >-
+          pnpm
+          --filter @seekite/core
+          --filter @seekite/embeddings-ternlight
+          --filter @seekite/build
+          --filter @seekite/lab
+          --filter seekite
+          build
+
+      - name: Compare the docs corpus with its accepted baseline
+        id: benchmark
+        shell: bash
+        run: |
+          report_directory="$RUNNER_TEMP/docs-corpus-benchmark"
+          mkdir -p "$report_directory"
+          set +e
+          pnpm exec seekite bench --baseline bench/baseline.json --label "pr-$PR_NUMBER" > "$report_directory/output.txt" 2>&1
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            outcome='passed'
+            icon='✅'
+          else
+            outcome='failed'
+            icon='❌'
+          fi
+          {
+            echo "### $icon Docs-corpus benchmark $outcome"
+            echo
+            echo "The complete comparison output is attached to this workflow run."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload comparison for the fork-safe comment workflow
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: docs-corpus-benchmark-${{ github.run_id }}
+          path: ${{ runner.temp }}/docs-corpus-benchmark
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Fail on a quality regression
+        if: steps.benchmark.outputs.exit_code != '0'
+        run: exit 1

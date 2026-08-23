@@ -44,7 +44,8 @@ async function stopChrome(chrome: ChildProcess): Promise<void> {
   await exited;
 }
 
-test("a documentation page meets the Lighthouse performance budget", async () => {
+test("a documentation page meets the Lighthouse performance budget", async ({ browserName }) => {
+  test.skip(browserName !== "chromium", "Lighthouse drives the bundled Chromium executable");
   const userDataDir = await mkdtemp(path.join(tmpdir(), "seekite-lighthouse-"));
   const port = await availablePort();
   const chrome = spawn(

@@ -1,5 +1,14 @@
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import { docs, getDoc, resolveMarkdownHref, splitFrontmatter } from "./content";
+
+function filesBelow(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const absolute = path.join(directory, entry.name);
+    return entry.isDirectory() ? filesBelow(absolute) : [absolute];
+  });
+}
 
 describe("documentation content", () => {
   it("discovers every root Markdown page with navigation metadata", () => {
@@ -32,5 +41,27 @@ describe("documentation content", () => {
     expect(resolveMarkdownHref("providers", "https://example.com/docs")).toBe(
       "https://example.com/docs",
     );
+  });
+
+  it("keeps the integration marks in local source assets", () => {
+    const sourceDirectory = import.meta.dirname;
+    const brandDirectory = path.join(sourceDirectory, "assets/brand");
+    const expectedAssets = [
+      "astro-dark.svg",
+      "astro-light.svg",
+      "docusaurus.svg",
+      "nextjs.svg",
+      "vite.svg",
+    ];
+
+    expect(new Set(readdirSync(brandDirectory))).toEqual(new Set(expectedAssets));
+    for (const asset of expectedAssets) {
+      expect(readFileSync(path.join(brandDirectory, asset), "utf8")).toMatch(/^<svg(?:\s|>)/);
+    }
+
+    const forbiddenProviderName = ["sv", "gl"].join("");
+    for (const sourceFile of filesBelow(sourceDirectory)) {
+      expect(readFileSync(sourceFile, "utf8").toLowerCase()).not.toContain(forbiddenProviderName);
+    }
   });
 });

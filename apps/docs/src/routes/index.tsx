@@ -94,9 +94,7 @@ function HomePage() {
         <div className="section-heading">
           <p className="eyebrow">Integrations</p>
           <h2 id="integrations-title">Bring your own site.</h2>
-          <p>
-            First-party guides for common build pipelines. Framework marks are sourced from SVGL.
-          </p>
+          <p>First-party guides for common build pipelines.</p>
         </div>
         <IntegrationGrid />
       </section>

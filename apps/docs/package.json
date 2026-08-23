@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy",
     "deploy:preview": "wrangler versions upload",
     "preview": "vp preview",
+    "sync:brand-icons": "node ./scripts/sync-brand-icons.mjs",
     "test": "vp test run --config vitest.config.ts",
     "test:e2e": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"

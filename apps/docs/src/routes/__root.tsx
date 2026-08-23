@@ -68,6 +68,9 @@ function RootDocument({ children }: { children: ReactNode }) {
                   <Link to="/docs/$" params={{ _splat: "getting-started" }}>
                     Docs
                   </Link>
+                  <Link to="/docs/$" params={{ _splat: "benchmarks" }}>
+                    Benchmarks
+                  </Link>
                   <Link to="/playground">Playground</Link>
                 </nav>
                 <div className="header-actions">
@@ -94,6 +97,9 @@ function RootDocument({ children }: { children: ReactNode }) {
               <nav aria-label="Footer navigation">
                 <Link to="/docs/$" params={{ _splat: "getting-started" }}>
                   Docs
+                </Link>
+                <Link to="/docs/$" params={{ _splat: "benchmarks" }}>
+                  Benchmarks
                 </Link>
                 <Link to="/playground">Playground</Link>
                 <a href="https://github.com/spadenbargo/seekite">GitHub</a>

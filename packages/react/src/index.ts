@@ -28,7 +28,20 @@ export {
   type SearchSnippetProps,
 } from "./primitives.js";
 export { SearchBox, type SearchBoxProps } from "./search-box.js";
-export { SearchDialog, type SearchDialogProps } from "./search-dialog.js";
+export {
+  SearchDialog,
+  SearchDialogFooter,
+  SearchDialogHeader,
+  SearchDialogList,
+  SearchDialogRecent,
+  SearchDialogResult,
+  type SearchDialogFooterProps,
+  type SearchDialogHeaderProps,
+  type SearchDialogListProps,
+  type SearchDialogProps,
+  type SearchDialogRecentProps,
+  type SearchDialogResultProps,
+} from "./search-dialog.js";
 export type {
   SearchController,
   SearchControllerOptions,

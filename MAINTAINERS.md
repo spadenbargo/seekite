@@ -11,7 +11,7 @@ deployments. Public contributor instructions remain in
 - Grant the smallest role needed and review maintainers, GitHub Apps, npm
   package access, Cloudflare members, and recovery methods every quarter.
 - Keep production changes attributable: merge through pull requests, let CI
-  publish packages, and let Cloudflare build the exact Git commit it deploys.
+  publish packages, and deploy only the exact CI-verified artifact to Cloudflare.
 - Do not put credentials in the repository, issue trackers, pull requests,
   build logs, package tarballs, or local `.env` files that may be committed.
   GitHub secret scanning and push protection are a backstop, not a vault.
@@ -71,25 +71,57 @@ the incident.
 ## Documentation deployment
 
 The docs are a static Cloudflare Worker named `seekite-docs`, configured by
-`apps/docs/wrangler.jsonc`. GitHub Actions builds, tests, and uploads the static
-artifact without production credentials. Cloudflare Workers Builds owns the
-deployment pipeline through its GitHub App:
+`apps/docs/wrangler.jsonc`. The Docs CI workflow builds, unit-tests, and
+browser-tests the site once, then deploys that exact uploaded artifact. A push
+to `main` deploys production; same-repository pull requests receive a
+`workers.dev` version preview. Fork pull requests build and test normally but
+never receive Cloudflare credentials or attempt a deployment.
 
-| Setting | Value |
-| --- | --- |
-| Repository | `spadenbargo/seekite` |
-| Production branch | `main` |
-| Root directory | `/` |
-| Build command | `pnpm docs:build` |
-| Deploy command | `pnpm --filter @seekite/docs run deploy` |
-| Non-production deploy command | `pnpm --filter @seekite/docs run deploy:preview` |
+Create a `cloudflare-production` GitHub environment restricted to `main` and
+store these environment secrets in it:
 
-Limit the Cloudflare Workers & Pages GitHub App to this repository only. Workers
-Builds manages its deployment token inside Cloudflare, so GitHub must not have
-`CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_ACCOUNT_ID` secrets. Non-secret settings
-belong in versioned Wrangler configuration or ordinary environment variables;
-runtime secrets, if the static site ever needs them, belong in encrypted
-Cloudflare bindings and must never be exposed to browser code.
+- `CLOUDFLARE_API_TOKEN`: an account-scoped token with only **Workers Scripts:
+  Edit** for the account that owns `seekite-docs`.
+- `CLOUDFLARE_ACCOUNT_ID`: the owning Cloudflare account identifier.
+
+Store the same two values as repository Actions secrets for same-repository PR
+previews. Do not expose them to fork workflows. Review the token's audit log and
+rotate it at least every 90 days, immediately after maintainer removal, and
+after any suspected disclosure. During rotation, replace the repository and
+environment copies together, exercise a preview upload, then exercise a
+production deployment before revoking the old token.
+
+Wrangler retains previous Worker versions. To inspect and roll production back
+from a trusted maintainer checkout, authenticate with the same least-privilege
+credentials and run:
+
+```sh
+pnpm --filter @seekite/docs exec wrangler versions list
+pnpm --filter @seekite/docs exec wrangler versions deploy <VERSION_ID>@100% --yes
+```
+
+For a gradual rollback, deploy the previous and current IDs with explicit
+percentages first, verify production, and then move the previous ID to 100%.
+Non-secret settings belong in versioned Wrangler configuration; future runtime
+secrets belong in encrypted Cloudflare bindings and must never be exposed to
+browser code.
+
+## Benchmark operations
+
+`Search benchmarks` runs the pinned SciFact, NFCorpus, and ArguAna lexical
+suite every Monday and on manual dispatch. Dataset archives and extracted
+corpora live only in the Actions cache or local `.cache/beir`; result JSON and
+Markdown are retained as workflow artifacts for 90 days. Review measurements
+from a designated machine before copying numbers into
+`bench/beir/accepted.json` or the public benchmark page. Never commit dataset
+contents.
+
+Adding the `run-benchmarks` label to a pull request runs the cheaper docs-corpus
+comparison against `bench/baseline.json`. A separate `workflow_run` job reads
+the resulting artifact and updates the sticky PR comment; this keeps the
+write-capable token out of the job that executes pull-request code, including
+fork code. Remove and re-add the label to request another run without a code
+change.
 
 Before promoting an access change, confirm that an existing owner retains a
 tested recovery path. When removing a maintainer, revoke GitHub, npm, and

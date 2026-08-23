@@ -86,3 +86,8 @@ query latency and artifact size. Synthetic queries are useful retrievability
 checks, but promote important cases to human judgments before treating their
 scores as relevance evidence. Attach the baseline delta to every pull request
 that changes analysis, chunking, embeddings, quantization, or ranking.
+
+For a standards-based comparison across public research collections and peer
+engines, use the separate [BEIR benchmark suite](./benchmarks.md). The two gates
+answer different questions: this workflow protects relevance on your corpus;
+BEIR makes cross-engine ranking claims reproducible.

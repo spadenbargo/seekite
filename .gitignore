@@ -16,3 +16,5 @@ packages/embeddings-ternlight/native/assets/model.bin
 packages/embeddings-ternlight/native/pkg-*/
 packages/embeddings-ternlight/native/target/
 .seekite/
+specs/
+.cache/beir/
