@@ -1,6 +1,6 @@
 {
   "name": "@seekite/vitepress",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "VitePress integration and headless theme bindings for Seekite",
   "keywords": [
     "documentation",
