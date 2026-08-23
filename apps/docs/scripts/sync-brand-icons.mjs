@@ -8,6 +8,7 @@ const iconQueries = {
   astro: "Astro",
   nextjs: "Next.js",
   docusaurus: "Docusaurus",
+  github: "GitHub",
 };
 const assetsRoot = path.resolve(import.meta.dirname, "../src/assets");
 const destination = path.join(assetsRoot, "brand");

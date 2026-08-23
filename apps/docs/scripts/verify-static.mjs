@@ -11,6 +11,10 @@ const candidates = [
 const output = candidates.find((directory) => existsSync(path.join(directory, "index.html")));
 if (!output) throw new Error("TanStack Start did not emit a static index.html");
 
+// Fumadocs' responsive docs layout, navigation and TOC replace the previous
+// hand-rolled shell. Keep a measured compressed ceiling with modest headroom.
+const maximumInitialJavaScriptKib = 210;
+
 function files(directory, extension) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const absolute = path.join(directory, entry.name);
@@ -76,9 +80,9 @@ for (const htmlFile of htmlFiles) {
     maximumInitialGzipBytes = initialGzipBytes;
     maximumInitialGzipPage = path.relative(output, htmlFile);
   }
-  if (initialGzipBytes > 150 * 1024) {
+  if (initialGzipBytes > maximumInitialJavaScriptKib * 1024) {
     throw new Error(
-      `${path.relative(output, htmlFile)} loads ${(initialGzipBytes / 1024).toFixed(1)} KiB JavaScript gzip; budget is 150 KiB`,
+      `${path.relative(output, htmlFile)} loads ${(initialGzipBytes / 1024).toFixed(1)} KiB JavaScript gzip; budget is ${maximumInitialJavaScriptKib} KiB`,
     );
   }
 
