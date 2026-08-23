@@ -45,24 +45,11 @@
   --seekite-border: var(--border);
   --seekite-accent: var(--primary);
   --seekite-accent-soft: var(--accent-soft);
+  --seekite-highlight: #fef08a;
+  --seekite-danger: #b42318;
+  --seekite-backdrop: rgb(15 23 42 / 52%);
   --seekite-radius: var(--radius);
   --seekite-shadow: var(--shadow);
-  --color-fd-background: var(--background);
-  --color-fd-foreground: var(--foreground);
-  --color-fd-muted: var(--muted);
-  --color-fd-muted-foreground: var(--muted-foreground);
-  --color-fd-popover: var(--card);
-  --color-fd-popover-foreground: var(--foreground);
-  --color-fd-card: var(--card);
-  --color-fd-card-foreground: var(--card-foreground);
-  --color-fd-border: color-mix(in srgb, var(--border) 82%, transparent);
-  --color-fd-primary: var(--primary);
-  --color-fd-primary-foreground: var(--primary-foreground);
-  --color-fd-secondary: var(--muted);
-  --color-fd-secondary-foreground: var(--foreground);
-  --color-fd-accent: var(--accent-soft);
-  --color-fd-accent-foreground: var(--foreground);
-  --color-fd-ring: var(--ring);
   font-family:
     Inter,
     ui-sans-serif,
@@ -91,6 +78,32 @@
   --code: #080b09;
   --code-foreground: #eaf2ec;
   --shadow: 0 18px 60px rgb(0 0 0 / 28%);
+  --seekite-highlight: #854d0e;
+  --seekite-danger: #fda29b;
+  --seekite-backdrop: rgb(2 6 23 / 70%);
+}
+
+/* Fumadocs declares theme values on `.light` and `.dark`; keep the bridge at
+ * the same specificity so every Fumadocs primitive uses the Seekite palette. */
+:root,
+.light,
+.dark {
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-popover: var(--card);
+  --color-fd-popover-foreground: var(--foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
+  --color-fd-border: color-mix(in srgb, var(--border) 82%, transparent);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: var(--primary-foreground);
+  --color-fd-secondary: var(--muted);
+  --color-fd-secondary-foreground: var(--foreground);
+  --color-fd-accent: var(--accent-soft);
+  --color-fd-accent-foreground: var(--foreground);
+  --color-fd-ring: var(--ring);
 }
 
 * {
@@ -113,7 +126,6 @@ body {
 }
 
 a {
-  color: inherit;
   text-underline-offset: 0.2em;
 }
 
@@ -401,7 +413,7 @@ a {
   align-items: center;
   align-self: flex-end;
   gap: 0.35rem;
-  margin-top: 0.55rem;
+  margin-bottom: 0.55rem;
   padding: 0.3rem 0.5rem;
   border: 0;
   border-radius: 0.4rem;
@@ -644,7 +656,7 @@ a {
   padding-left: 0.75rem;
 }
 
-.doc-article {
+.seekite-doc-body {
   min-width: 0;
 }
 
@@ -664,9 +676,9 @@ a {
   text-transform: none;
 }
 
-.doc-article h1,
-.doc-article h2,
-.doc-article h3 {
+.seekite-doc-body h1,
+.seekite-doc-body h2,
+.seekite-doc-body h3 {
   color: var(--foreground);
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 500;
@@ -674,20 +686,20 @@ a {
   line-height: 1.12;
 }
 
-.doc-article h1 {
+.seekite-doc-body h1 {
   max-width: 15ch;
   margin: 0 0 1.4rem;
   font-size: clamp(2.75rem, 5vw, 4.2rem);
 }
 
-.doc-article h2 {
+.seekite-doc-body h2 {
   margin: 3.25rem 0 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
   font-size: 1.85rem;
 }
 
-.doc-article h3 {
+.seekite-doc-body h3 {
   margin: 2.2rem 0 0.8rem;
   font-size: 1.35rem;
 }
@@ -703,23 +715,23 @@ a {
   content: "#";
 }
 
-.doc-article p,
-.doc-article li {
+.seekite-doc-body p,
+.seekite-doc-body li {
   color: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground));
 }
 
-.doc-article p,
-.doc-article ul,
-.doc-article ol {
+.seekite-doc-body p,
+.seekite-doc-body ul,
+.seekite-doc-body ol {
   max-width: 68ch;
 }
 
-.doc-article a:not(.heading-anchor) {
+.seekite-doc-body a:not(.heading-anchor) {
   color: var(--primary);
   text-decoration: underline;
 }
 
-.doc-article table {
+.seekite-doc-body table {
   display: block;
   max-width: 100%;
   overflow-x: auto;
@@ -727,14 +739,14 @@ a {
   font-size: 0.86rem;
 }
 
-.doc-article th,
-.doc-article td {
+.seekite-doc-body th,
+.seekite-doc-body td {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
   text-align: left;
 }
 
-.doc-article :not(pre) > code {
+.seekite-doc-body :not(pre) > code {
   padding: 0.13em 0.32em;
   border: 1px solid var(--border);
   border-radius: 0.3em;
@@ -743,7 +755,7 @@ a {
   font-size: 0.86em;
 }
 
-.doc-article pre {
+.seekite-doc-body pre {
   max-width: 100%;
   overflow: auto;
   margin: 1.4rem 0;
@@ -755,6 +767,14 @@ a {
   font-size: 0.82rem;
   line-height: 1.7;
   tab-size: 2;
+}
+
+.seekite-doc-body pre > code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
 }
 
 /* @tanstack/highlight emits `.th-token.th-{className}`. */

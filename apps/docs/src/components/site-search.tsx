@@ -97,6 +97,11 @@ function LiveSearchView() {
 
   return (
     <div ref={containerRef} className="live-search">
+      {state.open ? (
+        <button type="button" className="live-search-close" onClick={() => controller.close()}>
+          <X aria-hidden="true" /> Close search
+        </button>
+      ) : null}
       <SearchBox
         label="Live documentation search"
         placeholder="Search guides and integrations…"
@@ -110,11 +115,6 @@ function LiveSearchView() {
         }}
         onResultSelect={(result) => window.location.assign(result.url)}
       />
-      {state.open ? (
-        <button type="button" className="live-search-close" onClick={() => controller.close()}>
-          <X aria-hidden="true" /> Close search
-        </button>
-      ) : null}
     </div>
   );
 }

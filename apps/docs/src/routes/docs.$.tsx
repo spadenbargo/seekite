@@ -35,7 +35,14 @@ function DocumentationPage() {
 
   return (
     <DocsLayout {...baseOptions()} tree={docsTree} tabs={false} sidebar={{ defaultOpenLevel: 1 }}>
-      <DocsPage id="main-content" toc={toc} breadcrumb={{ enabled: false }}>
+      <DocsPage
+        id="main-content"
+        toc={toc}
+        breadcrumb={{ enabled: false }}
+        tableOfContent={{
+          container: { role: "navigation", "aria-label": "Table of contents" },
+        }}
+      >
         <DocsBody className="seekite-doc-body" data-seekite-body data-section={page.section}>
           <DocMarkdown page={page} />
           <EditOnGitHub href={`${repositoryUrl}/edit/main/${page.sourcePath}`}>
