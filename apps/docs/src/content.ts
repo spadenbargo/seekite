@@ -1,6 +1,7 @@
 import { parseMarkdown } from "@tanstack/markdown/parser";
 import type { MarkdownDocument } from "@tanstack/markdown";
 import { docsMarkdownExtensions } from "@tanstack/markdown/extensions/docs";
+import type { Root as PageTreeRoot } from "fumadocs-core/page-tree";
 
 export interface DocFrontmatter {
   title: string;
@@ -151,3 +152,18 @@ export const docsBySection = docs.reduce<Record<string, DocPage[]>>((sections, p
   (sections[page.section] ??= []).push(page);
   return sections;
 }, {});
+
+export const docsTree: PageTreeRoot = {
+  name: "Seekite documentation",
+  children: Object.entries(docsBySection).map(([section, pages]) => ({
+    type: "folder",
+    name: section,
+    defaultOpen: true,
+    children: pages.map((page) => ({
+      type: "page",
+      name: page.title,
+      description: page.description,
+      url: `/docs/${page.slug}`,
+    })),
+  })),
+};

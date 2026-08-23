@@ -50,6 +50,8 @@ describe("documentation content", () => {
       "astro-dark.svg",
       "astro-light.svg",
       "docusaurus.svg",
+      "github-dark.svg",
+      "github-light.svg",
       "nextjs.svg",
       "vite.svg",
     ];

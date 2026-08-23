@@ -92,6 +92,31 @@ test("the search dialog closes from every trusted interaction without losing its
   await expect(dialog).toBeHidden();
 });
 
+test("the live index stays inline and closes without reopening the site dialog", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const demo = page.locator(".search-demo");
+  const input = demo.getByRole("combobox", { name: "Live documentation search" });
+
+  await input.click();
+  await expect(demo.locator(".seekite-panel")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Search Seekite documentation" })).toBeHidden();
+
+  await demo.getByRole("button", { name: "Close search" }).click();
+  await expect(demo.locator(".seekite-panel")).toBeHidden();
+
+  await input.click();
+  await input.fill("search quality");
+  await expect(demo.getByRole("option").first()).toBeVisible({ timeout: 30_000 });
+  await input.press("Escape");
+  await expect(demo.locator(".seekite-panel")).toBeHidden();
+
+  await input.click();
+  await page.getByRole("heading", { name: "Search your site." }).click();
+  await expect(demo.locator(".seekite-panel")).toBeHidden();
+});
+
 for (const theme of ["light", "dark"] as const) {
   test(`the seeded search dialog matches the ${theme} visual contract`, async ({
     browserName,
@@ -106,7 +131,7 @@ for (const theme of ["light", "dark"] as const) {
     await expect(dialog.getByRole("option").first()).toContainText("Search quality", {
       timeout: 30_000,
     });
-    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await expect(page.locator("html")).toHaveClass(new RegExp(`(?:^|\\s)${theme}(?:\\s|$)`));
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
@@ -119,17 +144,17 @@ for (const theme of ["light", "dark"] as const) {
 
 test("the color mode toggles and persists", async ({ page }) => {
   await page.goto("/");
-  const toggle = page.locator(".theme-toggle");
-  const initialTheme = await page.locator("html").getAttribute("data-theme");
-  expect(initialTheme === "light" || initialTheme === "dark").toBeTruthy();
+  const toggle = page.getByRole("button", { name: "Toggle Theme" });
+  const initialClass = (await page.locator("html").getAttribute("class")) ?? "";
+  const initialTheme = initialClass.split(/\s+/).includes("dark") ? "dark" : "light";
 
   await toggle.click();
   const nextTheme = initialTheme === "dark" ? "light" : "dark";
-  await expect(page.locator("html")).toHaveAttribute("data-theme", nextTheme);
+  await expect(page.locator("html")).toHaveClass(new RegExp(`(?:^|\\s)${nextTheme}(?:\\s|$)`));
   expect(await page.evaluate(() => localStorage.getItem("seekite-theme"))).toBe(nextTheme);
 
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", nextTheme);
+  await expect(page.locator("html")).toHaveClass(new RegExp(`(?:^|\\s)${nextTheme}(?:\\s|$)`));
 });
 
 test("the homepage serves theme-aware integration icons locally", async ({ page }) => {
@@ -163,8 +188,8 @@ test("the homepage serves theme-aware integration icons locally", async ({ page 
   await expect(lightIcon).toBeVisible();
   await expect(darkIcon).toBeHidden();
 
-  await page.locator(".theme-toggle").click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Toggle Theme" }).click();
+  await expect(page.locator("html")).toHaveClass(/(?:^|\s)dark(?:\s|$)/);
   await expect(lightIcon).toBeHidden();
   await expect(darkIcon).toBeVisible();
   await expect
@@ -187,7 +212,7 @@ test("documentation code blocks contain highlighted tokens", async ({ page }) =>
 for (const path of ["/", "/docs/search-quality"] as const) {
   test(`${path} has no automatically detectable accessibility violations`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.locator("main#main-content")).toBeVisible();
+    await expect(page.locator("#main-content")).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
