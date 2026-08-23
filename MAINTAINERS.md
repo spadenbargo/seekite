@@ -77,19 +77,22 @@ to `main` deploys production; same-repository pull requests receive a
 `workers.dev` version preview. Fork pull requests build and test normally but
 never receive Cloudflare credentials or attempt a deployment.
 
-Create a `cloudflare-production` GitHub environment restricted to `main` and
-store these environment secrets in it:
+Create a `cloudflare-production` GitHub environment restricted to the exact
+`main` branch and a `cloudflare-preview` environment restricted to
+`refs/pull/*/merge`. Store these environment secrets in both environments:
 
-- `CLOUDFLARE_API_TOKEN`: an account-scoped token with only **Workers Scripts:
-  Edit** for the account that owns `seekite-docs`.
+- `CLOUDFLARE_API_TOKEN`: an account-owned service token with only **Workers
+  Scripts: Edit** for the account that owns `seekite-docs` and **Workers Routes:
+  Edit** for `badenspargo.com`.
 - `CLOUDFLARE_ACCOUNT_ID`: the owning Cloudflare account identifier.
 
-Store the same two values as repository Actions secrets for same-repository PR
-previews. Do not expose them to fork workflows. Review the token's audit log and
-rotate it at least every 90 days, immediately after maintainer removal, and
-after any suspected disclosure. During rotation, replace the repository and
-environment copies together, exercise a preview upload, then exercise a
-production deployment before revoking the old token.
+Do not store either value as a repository-wide Actions secret. The preview job
+uses only trusted base-branch tooling and never runs for fork or Dependabot pull
+requests. Give the token a hard expiry of no more than one year, review its audit
+log, and rotate it at least every 90 days, immediately after maintainer removal,
+and after any suspected disclosure. During rotation, replace both environment
+copies together, exercise a preview upload, then exercise a production
+deployment before revoking the old token.
 
 Wrangler retains previous Worker versions. To inspect and roll production back
 from a trusted maintainer checkout, authenticate with the same least-privilege
