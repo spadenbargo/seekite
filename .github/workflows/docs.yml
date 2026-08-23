@@ -27,7 +27,7 @@ on:
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -58,7 +58,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @seekite/docs test
       - run: pnpm docs:build
-      - run: pnpm --filter @seekite/docs exec playwright install --with-deps chromium
+      - run: pnpm --filter @seekite/docs exec playwright install --with-deps chromium webkit
       - run: pnpm --filter @seekite/docs test:e2e
 
       - name: Upload verified static docs
@@ -68,3 +68,125 @@ jobs:
           path: apps/docs/dist/client
           if-no-files-found: error
           retention-days: 7
+
+  deploy-production:
+    name: Deploy production docs
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: cloudflare-production
+    concurrency:
+      group: docs-deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: seekite-docs
+          path: apps/docs/dist/client
+
+      - name: Deploy the verified artifact
+        working-directory: apps/docs
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          pnpm exec wrangler deploy 2>&1 | tee "$RUNNER_TEMP/wrangler-deploy.log"
+          version_id=$(sed -nE 's/.*Version ID:[[:space:]]*([^[:space:]]+).*/\1/p' "$RUNNER_TEMP/wrangler-deploy.log" | tail -1)
+          {
+            echo "### Production docs deployed"
+            echo
+            echo "Cloudflare Worker: \`seekite-docs\`"
+            if [ -n "$version_id" ]; then
+              echo "Version: \`$version_id\`"
+            else
+              echo "See the deploy log above for the Cloudflare version identifier."
+            fi
+            echo "Site: https://seekite.badenspargo.com/"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-preview:
+    name: Deploy docs preview
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: docs-deploy-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # Deployment tooling and install hooks must come from the trusted base,
+          # while the downloaded static artifact remains the tested PR output.
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: seekite-docs
+          path: apps/docs/dist/client
+
+      - name: Upload the verified preview version
+        id: preview
+        working-directory: apps/docs
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          pnpm exec wrangler versions upload 2>&1 | tee "$RUNNER_TEMP/wrangler-preview.log"
+          preview_url=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev[^[:space:]]*' "$RUNNER_TEMP/wrangler-preview.log" | tail -1 || true)
+          if [ -z "$preview_url" ]; then
+            echo "::error::Wrangler did not report a workers.dev preview URL"
+            exit 1
+          fi
+          echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Docs preview uploaded"
+            echo
+            echo "Preview: $preview_url"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or update the preview comment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker='<!-- seekite-docs-preview -->'
+          body=$(printf '%s\n### Documentation preview\n\nThe verified docs artifact is available at [%s](%s).\n' "$marker" "$PREVIEW_URL" "$PREVIEW_URL")
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" | head -1)
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -f body="$body" >/dev/null
+          fi

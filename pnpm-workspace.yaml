@@ -2,6 +2,7 @@ packages:
   - packages/*
   - examples/*
   - apps/*
+  - bench/beir
 
 allowBuilds:
   core-js: true

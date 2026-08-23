@@ -173,10 +173,41 @@ describe("@seekite/react interactions", () => {
     expect(selected).toHaveBeenCalledWith(expect.objectContaining({ id: "b" }));
     expect(controller?.getState().recent).toEqual(["canvas"]);
     expect(input.getAttribute("aria-expanded")).toBe("false");
+
+    input.blur();
+    await act(async () => input.focus());
+    await act(async () => key(input, "Escape"));
+    expect(controller?.getState()).toMatchObject({ open: true, query: "" });
+    await act(async () => key(input, "Escape"));
+    expect(controller?.getState().open).toBe(false);
   });
 
-  it("opens the portal with Ctrl/Cmd+K, traps and restores focus, and removes its shortcut", async () => {
+  it("closes the dialog in one Escape from the input without clearing or reopening", async () => {
     const client = fakeClient();
+    const nestedResponse = response();
+    const parent = nestedResponse.results[0]!;
+    const headingChunk = {
+      ...parent,
+      id: "a-heading",
+      document: { id: parent.document.id, matches: 2 },
+    };
+    const textChunk = {
+      ...parent,
+      id: "a-text",
+      heading: undefined,
+      content: "A matching body-only canvas chunk",
+      document: { id: parent.document.id, matches: 2 },
+    };
+    client.query.mockResolvedValue({
+      ...nestedResponse,
+      results: [
+        {
+          ...parent,
+          document: { ...parent.document, matches: 2, chunks: [headingChunk, textChunk] },
+        },
+        nestedResponse.results[1]!,
+      ],
+    });
     let controller: SearchController | undefined;
     const trigger = createElement(
       "button",
@@ -219,19 +250,59 @@ describe("@seekite/react interactions", () => {
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.activeElement).toBe(input);
 
-    await act(async () => key(input, "Tab"));
-    expect(document.activeElement).toBe(close);
-    await act(async () => key(close, "Tab", { shiftKey: true }));
+    close.focus();
+    await act(async () => key(close, "Tab"));
     expect(document.activeElement).toBe(input);
+    await act(async () => key(input, "Tab", { shiftKey: true }));
+    expect(document.activeElement).toBe(close);
 
+    input.focus();
     await act(async () => dispatchInput(input, "canvas"));
     await runImmediateSearch();
-    await act(async () => key(input, "Escape"));
-    expect(controller?.getState()).toMatchObject({ open: true, query: "" });
+    const firstResult = dialog.querySelectorAll<HTMLElement>('[role="option"]')[0]!;
+    expect(firstResult.querySelectorAll('[data-kind="page"]')).toHaveLength(1);
+    expect(firstResult.querySelectorAll('[data-kind="heading"]')).toHaveLength(1);
+    expect(firstResult.querySelectorAll('[data-kind="text"]')).toHaveLength(1);
+    const secondResult = dialog.querySelectorAll<HTMLElement>('[role="option"]')[1]!;
+    const scrollIntoView = vi.fn();
+    secondResult.scrollIntoView = scrollIntoView;
+    await act(async () => key(input, "ArrowDown"));
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+
+    const scrollRegion = dialog.querySelector<HTMLElement>(".seekite-dialog-list")!;
+    expect(scrollRegion.tabIndex).toBe(0);
+    close.focus();
+    await act(async () => key(close, "Tab"));
+    expect(document.activeElement).toBe(input);
+    scrollRegion.focus();
+    await act(async () => key(scrollRegion, "Tab"));
+    expect(document.activeElement).toBe(input);
+    scrollRegion.focus();
+    await act(async () => key(scrollRegion, "Tab", { shiftKey: true }));
+    expect(document.activeElement).toBe(close);
+
     await act(async () => key(input, "Escape"));
     expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+    expect(controller?.getState()).toMatchObject({ open: false, query: "canvas" });
     expect(document.body.style.overflow).toBe("");
     expect(document.activeElement).toBe(before);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+
+    await act(async () => key(window, "k", { metaKey: true }));
+    const reopened = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(reopened.querySelector<HTMLInputElement>('[role="combobox"]')?.value).toBe("canvas");
+    const reopenedClose = reopened.querySelector<HTMLButtonElement>('[aria-label="Close search"]')!;
+    reopenedClose.focus();
+    await act(async () => key(reopenedClose, "Escape"));
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+    expect(controller?.getState()).toMatchObject({ open: false, query: "canvas" });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
 
     await act(async () => root.unmount());
     await Promise.resolve();
@@ -242,6 +313,62 @@ describe("@seekite/react interactions", () => {
     expect(controller?.getState()).toBe(snapshot);
 
     root = createRoot(host);
+  });
+
+  it("shows recent queries and only closes the backdrop for a primary press", async () => {
+    const client = fakeClient();
+    let controller: SearchController | undefined;
+    await act(async () =>
+      root.render(
+        createElement(
+          SeekiteProvider,
+          { client, options: { debounceMs: 0 } },
+          createElement(
+            Fragment,
+            null,
+            createElement(Capture, { capture: (value) => (controller = value) }),
+            createElement(SearchDialog, { label: "Search documentation" }),
+          ),
+        ),
+      ),
+    );
+
+    await act(async () => controller?.open());
+    let dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    let input = dialog.querySelector<HTMLInputElement>('[role="combobox"]')!;
+    await act(async () => dispatchInput(input, "canvas"));
+    await runImmediateSearch();
+    await act(async () => key(input, "Enter"));
+    expect(controller?.getState().recent).toEqual(["canvas"]);
+
+    await act(async () => {
+      controller?.setQuery("");
+      controller?.open();
+    });
+    dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    const recent = [...dialog.querySelectorAll<HTMLButtonElement>(".seekite-recent-query")].find(
+      (button) => button.textContent === "canvas",
+    )!;
+    expect(dialog.querySelector(".seekite-dialog-list")?.hasAttribute("data-empty")).toBe(false);
+    await act(async () => recent.click());
+    input = dialog.querySelector<HTMLInputElement>('[role="combobox"]')!;
+    expect(controller?.getState().query).toBe("canvas");
+    expect(document.activeElement).toBe(input);
+
+    const close = dialog.querySelector<HTMLButtonElement>('[aria-label="Close search"]')!;
+    await act(async () => close.click());
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+
+    await act(async () => controller?.open());
+    const overlay = document.body.querySelector<HTMLElement>(".seekite-overlay")!;
+    await act(async () => {
+      overlay.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 2 }));
+    });
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+    await act(async () => {
+      overlay.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0 }));
+    });
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it("renders untrusted result fields as text instead of executable markup", async () => {
@@ -272,6 +399,6 @@ describe("@seekite/react interactions", () => {
     expect(host.querySelector("script")).toBeNull();
     expect(host.textContent).toContain("<img");
     expect(host.textContent).toContain("<script>");
-    expect((globalThis as { __seekiteXss?: boolean }).__seekiteXss).toBeUndefined();
+    expect(Reflect.get(globalThis, "__seekiteXss")).toBeUndefined();
   });
 });

@@ -50,6 +50,8 @@ export interface SearchInputProps extends Omit<
 > {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onResultSelect?: ResultSelectHandler;
+  /** Open the controller when the input receives focus. Disable this inside modal dialogs. */
+  openOnFocus?: boolean;
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function SearchInput(
@@ -59,6 +61,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
     onFocus,
     onKeyDown,
     onResultSelect,
+    openOnFocus = true,
     "aria-label": ariaLabel = "Search",
     ...props
   },
@@ -115,7 +118,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
       }}
       onFocus={(event) => {
         onFocus?.(event);
-        if (!event.defaultPrevented) controller.open();
+        if (!event.defaultPrevented && openOnFocus) controller.open();
       }}
       onKeyDown={handleKeyDown}
     />
@@ -223,6 +226,8 @@ export interface SearchResultsProps extends Omit<HTMLAttributes<HTMLDivElement>,
   renderResult?: (result: SearchResultValue, index: number) => ReactNode;
   onResultSelect?: ResultSelectHandler;
   label?: string;
+  /** Group rows by corpus. Disable this for a single, document-oriented result list. */
+  groupByCorpus?: boolean;
 }
 
 export function SearchResults({
@@ -230,6 +235,7 @@ export function SearchResults({
   renderResult,
   onResultSelect,
   label = "Search results",
+  groupByCorpus = true,
   className,
   ...props
 }: SearchResultsProps) {
@@ -257,34 +263,49 @@ export function SearchResults({
         aria-busy={state.status === "loading"}
       >
         {children ??
-          groups.map((group) => {
-            const labelId = `${view.listboxId}-group-${group.start}`;
-            return (
-              <li key={`${group.corpus}-${group.start}`} role="presentation">
-                <div role="group" aria-labelledby={labelId}>
-                  <div id={labelId} className="seekite-group-label">
-                    {group.corpus}
-                  </div>
-                  <ul role="presentation" className="seekite-group-results">
-                    {group.results.map(({ result, index }) =>
-                      renderResult ? (
-                        <Fragment key={`${result.corpus}-${result.id}`}>
-                          {renderResult(result, index)}
-                        </Fragment>
-                      ) : (
-                        <SearchResult
-                          key={`${result.corpus}-${result.id}`}
-                          result={result}
-                          index={index}
-                          onResultSelect={onResultSelect}
-                        />
-                      ),
-                    )}
-                  </ul>
-                </div>
-              </li>
-            );
-          })}
+          (groupByCorpus
+            ? groups.map((group) => {
+                const labelId = `${view.listboxId}-group-${group.start}`;
+                return (
+                  <li key={`${group.corpus}-${group.start}`} role="presentation">
+                    <div role="group" aria-labelledby={labelId}>
+                      <div id={labelId} className="seekite-group-label">
+                        {group.corpus}
+                      </div>
+                      <ul role="presentation" className="seekite-group-results">
+                        {group.results.map(({ result, index }) =>
+                          renderResult ? (
+                            <Fragment key={`${result.corpus}-${result.id}`}>
+                              {renderResult(result, index)}
+                            </Fragment>
+                          ) : (
+                            <SearchResult
+                              key={`${result.corpus}-${result.id}`}
+                              result={result}
+                              index={index}
+                              onResultSelect={onResultSelect}
+                            />
+                          ),
+                        )}
+                      </ul>
+                    </div>
+                  </li>
+                );
+              })
+            : results.map((result, index) =>
+                renderResult ? (
+                  <Fragment key={`${result.corpus}-${result.id}`}>
+                    {renderResult(result, index)}
+                  </Fragment>
+                ) : (
+                  <SearchResult
+                    key={`${result.corpus}-${result.id}`}
+                    result={result}
+                    index={index}
+                    onResultSelect={onResultSelect}
+                  />
+                ),
+              ))}
       </ul>
     </div>
   );
@@ -321,12 +342,14 @@ export interface SearchFacetsProps extends HTMLAttributes<HTMLDivElement> {
   fields?: string[];
   labelForField?: (field: string) => ReactNode;
   labelForValue?: (field: string, value: string, count: number) => ReactNode;
+  facetTabIndex?: number;
 }
 
 export function SearchFacets({
   fields,
   labelForField = (field) => field,
   labelForValue = (_field, value, count) => `${value} (${count})`,
+  facetTabIndex,
   className,
   ...props
 }: SearchFacetsProps) {
@@ -353,6 +376,7 @@ export function SearchFacets({
                     type="button"
                     className={classes("seekite-facet", selected && "is-active")}
                     aria-pressed={selected}
+                    tabIndex={facetTabIndex}
                     onClick={() => controller.toggleFacet(field, value)}
                   >
                     {labelForValue(field, value, count)}

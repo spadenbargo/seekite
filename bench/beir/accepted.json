@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "acceptedAt": "2026-08-23T08:03:26.202Z",
+  "regressionTolerance": 0.02,
+  "datasets": {
+    "scifact": {
+      "seekite-lexical": {
+        "ndcg10": 0.684130741562251
+      }
+    },
+    "nfcorpus": {
+      "seekite-lexical": {
+        "ndcg10": 0.3167187173665759
+      }
+    },
+    "arguana": {
+      "seekite-lexical": {
+        "ndcg10": 0.3708551122269099
+      }
+    }
+  }
+}

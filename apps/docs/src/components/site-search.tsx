@@ -9,7 +9,7 @@ const searchOptions = {
     corpora: ["docs"],
     mode: "hybrid" as const,
     facets: ["section"],
-    group: "document" as const,
+    group: "expanded" as const,
     hydrate: true,
     limit: 12,
   },

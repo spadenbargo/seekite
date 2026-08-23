@@ -65,7 +65,10 @@ export interface SearchController {
   prefetch(): Promise<void>;
   open(): void;
   close(): void;
-  /** First call clears a non-empty query; the next closes the controller. */
+  /**
+   * Inline-combobox Escape intent: clear a non-empty query first, then close.
+   * Modal dialogs should call `close()` so Escape always dismisses in one press.
+   */
   escape(): EscapeIntent;
   destroy(): void;
 }

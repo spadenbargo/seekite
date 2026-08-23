@@ -1,0 +1,139 @@
+name: Benchmark PR comment
+
+on:
+  workflow_run:
+    workflows: [Search benchmarks]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  comment:
+    name: Update benchmark comment
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Find this run's benchmark artifact
+        id: artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          name="docs-corpus-benchmark-$RUN_ID"
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/artifacts" --jq ".artifacts[] | select(.name == \"$name\" and .expired == false) | .id" | head -1)
+          if [ -n "$artifact_id" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No docs-corpus artifact was produced; the benchmark label was not active."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve the originating pull request
+        if: steps.artifact.outputs.found == 'true'
+        id: pull-request
+        shell: bash
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          candidate="$EVENT_PR_NUMBER"
+          if [ -z "$candidate" ]; then
+            head_owner=${HEAD_REPOSITORY%%/*}
+            candidate=$(gh api --method GET "repos/$GITHUB_REPOSITORY/pulls" \
+              -f state=all -f per_page=100 -f "head=$head_owner:$HEAD_BRANCH" | jq -r \
+              --arg base "$GITHUB_REPOSITORY" \
+              --arg branch "$HEAD_BRANCH" \
+              --arg head "$HEAD_REPOSITORY" \
+              --arg sha "$HEAD_SHA" \
+              '[.[] | select(.base.repo.full_name == $base and .head.repo.full_name == $head and .head.ref == $branch and (.head.sha == $sha or .merge_commit_sha == $sha))] | unique_by(.number) | if length == 1 then .[0].number else empty end')
+          fi
+          case "$candidate" in
+            ''|*[!0-9]*)
+              echo "::error::Could not resolve one originating pull request"
+              exit 1
+              ;;
+          esac
+          pull=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$candidate")
+          if ! jq -e \
+            --arg base "$GITHUB_REPOSITORY" \
+            --arg branch "$HEAD_BRANCH" \
+            --arg head "$HEAD_REPOSITORY" \
+            --arg sha "$HEAD_SHA" \
+            '.base.repo.full_name == $base and .head.repo.full_name == $head and .head.ref == $branch and (.head.sha == $sha or .merge_commit_sha == $sha)' \
+            <<< "$pull" >/dev/null; then
+            echo "::error::The resolved pull request does not match the triggering workflow"
+            exit 1
+          fi
+          echo "number=$candidate" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        if: steps.artifact.outputs.found == 'true'
+        with:
+          name: docs-corpus-benchmark-${{ github.event.workflow_run.id }}
+          path: ${{ runner.temp }}/docs-corpus-benchmark
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Create or update the sticky benchmark comment
+        if: steps.artifact.outputs.found == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          output="$RUNNER_TEMP/docs-corpus-benchmark/output.txt"
+          report="$RUNNER_TEMP/docs-corpus-benchmark/comment.md"
+          if [ ! -f "$output" ]; then
+            echo "::error::The benchmark artifact is incomplete"
+            exit 1
+          fi
+          OUTPUT_FILE="$output" REPORT_FILE="$report" node <<'NODE'
+          const { lstatSync, readFileSync, writeFileSync } = require("node:fs");
+          const stats = lstatSync(process.env.OUTPUT_FILE);
+          if (!stats.isFile() || stats.size > 1_000_000) {
+            throw new Error("Benchmark output must be a regular file no larger than 1 MB");
+          }
+          const raw = readFileSync(process.env.OUTPUT_FILE, "utf8")
+            .slice(-50_000)
+            .replace(/\u001b\[[0-?]*[ -\/]*[@-~]/g, "")
+            .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, "");
+          const escaped = raw
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll("@", "&#64;");
+          const passed = process.env.RUN_CONCLUSION === "success";
+          const body = [
+            "<!-- seekite-docs-corpus-benchmark -->",
+            `### ${passed ? "✅" : "❌"} Docs-corpus benchmark ${passed ? "passed" : "failed"}`,
+            "",
+            `[View the workflow run](https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.RUN_ID}).`,
+            "",
+            "<details><summary>Benchmark output (escaped PR data)</summary>",
+            "",
+            `<pre>${escaped}</pre>`,
+            "</details>",
+            "",
+          ].join("\n");
+          writeFileSync(process.env.REPORT_FILE, body);
+          NODE
+          marker='<!-- seekite-docs-corpus-benchmark -->'
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" | head -1)
+          body=$(< "$report")
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -f body="$body" >/dev/null
+          fi

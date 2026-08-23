@@ -1,0 +1,33 @@
+{
+  "name": "@seekite/bench-beir",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reproducible BEIR search-quality benchmark for Seekite and peer engines",
+  "type": "module",
+  "scripts": {
+    "bench": "pnpm run bench:prepare && node dist/run.js",
+    "bench:prepare": "pnpm --filter @seekite/core build && pnpm --filter @seekite/build build && pnpm --filter @seekite/embeddings-ternlight build && pnpm run build",
+    "build": "tsc -p tsconfig.json",
+    "test": "vp test run --config vitest.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@orama/orama": "3.1.18",
+    "@orama/stemmers": "3.1.18",
+    "@orama/stopwords": "3.1.18",
+    "@seekite/build": "workspace:*",
+    "@seekite/core": "workspace:*",
+    "@seekite/embeddings-ternlight": "workspace:*",
+    "@types/node": "^24.0.0",
+    "@zbsearch/stemmers": "4.0.0",
+    "@zbsearch/stopwords": "4.0.0",
+    "extract-zip": "2.0.1",
+    "minisearch": "7.2.0",
+    "typescript": "^5.9.0",
+    "vite-plus": "catalog:",
+    "zbsearch": "4.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

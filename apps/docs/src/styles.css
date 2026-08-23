@@ -27,7 +27,7 @@
   --primary: #276348;
   --primary-foreground: #ffffff;
   --muted: #f1f3ef;
-  --muted-foreground: #647068;
+  --muted-foreground: #606b64;
   --border: #dfe4df;
   --ring: #3c8061;
   --accent: #276348;
@@ -233,32 +233,39 @@ a {
 .search-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 10.5rem;
-  height: 2.25rem;
-  padding: 0 0.4rem 0 0.7rem;
+  gap: 0.55rem;
+  min-width: 12rem;
+  height: 2.4rem;
+  padding: 0 0.38rem 0 0.72rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--card) 88%, var(--muted));
   color: var(--muted-foreground);
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-align: left;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
 }
 
 .search-trigger:hover {
   border-color: color-mix(in srgb, var(--muted-foreground) 55%, var(--border));
+  background: var(--card);
 }
 
 .search-trigger kbd {
   margin-left: auto;
-  padding: 0.08rem 0.32rem;
+  min-width: 2rem;
+  padding: 0.12rem 0.34rem;
   border: 1px solid var(--border);
-  border-radius: 0.25rem;
+  border-radius: 0.32rem;
   background: var(--muted);
   color: var(--muted-foreground);
-  font-family: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.63rem;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .hero {
@@ -535,8 +542,26 @@ a {
 }
 
 .integration-icon img {
+  display: block;
   max-width: 1.65rem;
   max-height: 1.65rem;
+}
+
+.integration-icon img[data-icon-theme="dark"] {
+  display: none;
+}
+
+[data-theme="dark"] .integration-icon[data-has-theme-pair] {
+  border-color: #30333a;
+  background: #17191e;
+}
+
+[data-theme="dark"] .integration-icon img[data-icon-theme="light"] {
+  display: none;
+}
+
+[data-theme="dark"] .integration-icon img[data-icon-theme="dark"] {
+  display: block;
 }
 
 .integration-grid svg {
@@ -679,6 +704,7 @@ a {
 
 .doc-article a:not(.heading-anchor) {
   color: var(--primary);
+  text-decoration: underline;
 }
 
 .doc-article table {
