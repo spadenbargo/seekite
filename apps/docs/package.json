@@ -22,7 +22,7 @@
     "@tanstack/highlight": "0.0.10",
     "@tanstack/markdown": "0.0.13",
     "@tanstack/react-router": "1.170.31",
-    "@tanstack/react-start": "1.168.48",
+    "@tanstack/react-start": "1.168.60",
     "fumadocs-core": "16.15.1",
     "fumadocs-ui": "16.15.1",
     "lucide-react": "^1.33.0",
