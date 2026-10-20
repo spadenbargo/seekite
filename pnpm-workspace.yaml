@@ -11,7 +11,7 @@ allowBuilds:
 
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.9
-  vite-plus: 0.2.9
+  vite-plus: 1.1.0
 
 overrides:
   serialize-javascript: 7.1.0
