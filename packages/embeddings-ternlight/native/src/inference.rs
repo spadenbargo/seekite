@@ -92,9 +92,7 @@ pub fn embed_with(m: &LoadedModel, text: &str) -> Vec<f32> {
     // BitLinear weights are pre-unpacked to `i8 {-1, 0, +1}` at engine init
     // (Phase A3), so we read them directly out of `RuntimeWeights` — no more
     // per-call slicing into `m.body` for the weight bytes.
-    for layer_idx in 0..n_layers {
-        let lw = &m.weights.layers[layer_idx];
-
+    for lw in &m.weights.layers[..n_layers] {
         // Pre-LN attention
         parametric_layer_norm(&x, &lw.ln1_w, &lw.ln1_b, n_active, d_model, &mut x_norm);
 
