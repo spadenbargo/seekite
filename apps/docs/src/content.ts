@@ -148,7 +148,7 @@ export function resolveMarkdownHref(currentSlug: string, href: string): string {
   return fragment ? `${route}#${fragment}` : route;
 }
 
-export const docsBySection = docs.reduce<Record<string, DocPage[]>>((sections, page) => {
+const docsBySection = docs.reduce<Record<string, DocPage[]>>((sections, page) => {
   (sections[page.section] ??= []).push(page);
   return sections;
 }, {});

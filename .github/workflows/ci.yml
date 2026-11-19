@@ -250,7 +250,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { readdir, readFile, writeFile } from "node:fs/promises"
           import path from "node:path"
-          const dependencies = { react: "19.2.8", "react-dom": "19.2.8", vite: "8.2.2" }
+          const dependencies = { react: "19.2.8", "react-dom": "19.2.8", vite: "8.2.2", vue: "3.5.41", svelte: "5.58.0", "solid-js": "2.0.1", "@angular/core": "20.3.35", rxjs: "7.8.2" }
           for (const entry of await readdir(process.env.GITHUB_WORKSPACE + "/packages", { withFileTypes: true })) {
             if (!entry.isDirectory()) continue
             const file = path.join(process.env.GITHUB_WORKSPACE, "packages", entry.name, "package.json")

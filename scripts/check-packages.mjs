@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { build } from "vite";
 import { gzipSync } from "node:zlib";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -346,6 +347,10 @@ async function installSmoke(packages, tarballs, directory) {
       "vitepress@1.6.4",
       "vite@8.2.2",
       "vue@3.5.41",
+      "svelte@5.58.0",
+      "solid-js@2.0.1",
+      "@angular/core@20.3.35",
+      "rxjs@7.8.2",
       ...tarballs,
     ],
     { cwd: project },
@@ -389,6 +394,49 @@ async function installSmoke(packages, tarballs, directory) {
         { cwd: starter },
       );
     }
+  }
+
+  // A bare side-effect import can disappear entirely. Keep each consumer's
+  // named export live and externalize only the host framework it already owns.
+  for (const [pkg, name, peer, budget] of [
+    ["core", "workerSearch", null, 1600],
+    ["core", "createSearch", null, 7800],
+    ["search-ui", "createSearchController", null, 3400],
+    ["react", "useSeekite", "react", 850],
+    ["react/headless", "useSearchState", "react", 400],
+    ["vue", "useSearchState", "vue", 400],
+    ["solid", "createSearchState", "solid-js", 400],
+    ["svelte", "searchStore", "svelte", 400],
+    ["angular", "injectSearchState", "@angular/core", 400],
+  ]) {
+    const specifier = `@seekite/${pkg}`;
+    if (
+      !packages.some(({ manifest }) => manifest.name === specifier.split("/").slice(0, 2).join("/"))
+    )
+      continue;
+    const input = path.join(project, "consumer.mjs");
+    await writeFile(input, `export { ${name} } from "${specifier}";`);
+    const { output } = await build({
+      root: project,
+      configFile: false,
+      publicDir: false,
+      logLevel: "error",
+      build: {
+        write: false,
+        minify: true,
+        rollupOptions: {
+          input,
+          preserveEntrySignatures: "strict",
+          external: (id) => peer && (id === peer || id.startsWith(peer + "/")),
+        },
+      },
+    });
+    const [chunk] = output;
+    if (output.length !== 1 || chunk.type !== "chunk" || !chunk.exports.includes(name))
+      throw new Error(`${specifier}.${name} must emit one standalone JavaScript chunk`);
+    const bytes = gzipSync(chunk.code).byteLength;
+    console.log(`${specifier}.${name}: ${bytes} B minified + gzip (budget ${budget} B)`);
+    if (bytes > budget) throw new Error(`${specifier}.${name} exceeds its consumer budget`);
   }
 
   const browserCandidates = [
