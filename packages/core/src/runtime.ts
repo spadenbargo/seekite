@@ -1,3 +1,4 @@
+import type { TypedSearchClient } from "./typed-search.js";
 import {
   SeekiteFormatError,
   decodeDictionaryV2,
@@ -68,8 +69,7 @@ interface LoadedCorpusV1 {
   definition: CorpusManifestV1;
   metadata: CorpusMetadataV1;
   lexical: LexicalIndex;
-  vectors?: Float32Array[];
-  runtimeVectors?: Promise<Float32Array[]>;
+  vectors?: Promise<DecodedVectorsV2 | Float32Array[]>;
 }
 
 interface LoadedCorpusV2 {
@@ -78,8 +78,7 @@ interface LoadedCorpusV2 {
   definition: CorpusManifestV2;
   metadata: CorpusMetadataV2;
   lexical: LexicalDictionaryV2;
-  vectors?: DecodedVectorsV2 | Float32Array[];
-  runtimeVectors?: Promise<Float32Array[]>;
+  vectors?: Promise<DecodedVectorsV2 | Float32Array[]>;
   postings: LruPromises<ArrayBuffer>;
   content: LruPromises<ContentShardV2>;
   chunkById: Map<string, number>;
@@ -283,12 +282,26 @@ async function corpusVectors(
   providers: Record<string, EmbeddingProvider>,
   fetcher: typeof fetch,
 ): Promise<DecodedVectorsV2 | Float32Array[] | undefined> {
-  if (corpus.vectors) return corpus.vectors;
   const embedding = corpus.definition.embedding;
-  if (!embedding || embedding.mode !== "runtime") return undefined;
+  if (!embedding) return undefined;
   const provider = providers[embedding.provider];
   if (!provider) return undefined;
-  corpus.runtimeVectors ??= (async () => {
+  if (embedding.mode !== "runtime" && !corpus.definition.vectors) return undefined;
+  corpus.vectors ??= (async () => {
+    if (corpus.version === 2 && corpus.definition.vectors) {
+      const buffer = await fetchBuffer(
+        fetcher,
+        joinURL(corpus.root, corpus.definition.vectors.file),
+      );
+      const vectors = decodeVectorsV2(buffer, embedding.dimensions);
+      if (vectors.count !== corpus.definition.chunks)
+        throw new SeekiteFormatError(`Seekite corpus ${name} has inconsistent vector count`);
+      return vectors;
+    }
+    if (corpus.version === 1 && corpus.definition.vectors) {
+      const buffer = await fetchBuffer(fetcher, joinURL(corpus.root, corpus.definition.vectors));
+      return decodeVectors(buffer, embedding.dimensions);
+    }
     const chunks =
       corpus.version === 1 ? corpus.metadata.chunks : await hydrateAll(corpus, fetcher);
     const vectors = await provider.embedDocuments(chunks.map(embeddingText));
@@ -298,10 +311,12 @@ async function corpusVectors(
       );
     }
     vectors.forEach((vector) => validateVector(provider, vector, embedding.dimensions));
-    corpus.vectors = vectors;
     return vectors;
-  })();
-  return corpus.runtimeVectors;
+  })().catch((error) => {
+    corpus.vectors = undefined;
+    throw error;
+  });
+  return corpus.vectors;
 }
 
 function similarity(
@@ -460,6 +475,9 @@ async function hydrateResult(
   return { ...result, ...hydrated, document: { ...result.document, chunks } };
 }
 
+export function createSearch<C extends { corpora: Record<string, unknown> }>(
+  options?: CreateSearchOptions,
+): string extends keyof C["corpora"] ? SearchClient : TypedSearchClient<C>;
 export function createSearch(options: CreateSearchOptions = {}): SearchClient {
   const indexURL = resolveIndexURL(options);
   const fetcher = options.fetch ?? globalThis.fetch;
@@ -470,17 +488,19 @@ export function createSearch(options: CreateSearchOptions = {}): SearchClient {
   let manifestPromise: Promise<SearchManifest> | undefined;
 
   const manifest = () =>
-    (manifestPromise ??= fetchJSON<SearchManifest>(
-      fetcher,
-      joinURL(indexURL, "manifest.json"),
-    ).then((value) => {
-      if (value.format !== "seekite" || (value.version !== 1 && value.version !== 2)) {
-        throw new Error(
-          `Unsupported Seekite index format: ${String((value as { version?: unknown }).version)}`,
-        );
-      }
-      return value;
-    }));
+    (manifestPromise ??= fetchJSON<SearchManifest>(fetcher, joinURL(indexURL, "manifest.json"))
+      .then((value) => {
+        if (value.format !== "seekite" || (value.version !== 1 && value.version !== 2)) {
+          throw new Error(
+            `Unsupported Seekite index format: ${String((value as { version?: unknown }).version)}`,
+          );
+        }
+        return value;
+      })
+      .catch((error) => {
+        manifestPromise = undefined;
+        throw error;
+      }));
 
   async function loadCorpus(name: string): Promise<void> {
     if (corpora.has(name)) return;
@@ -491,12 +511,9 @@ export function createSearch(options: CreateSearchOptions = {}): SearchClient {
       if (!definition) throw new Error(`Unknown Seekite corpus: ${name}`);
       const root = joinURL(indexURL, definition.path);
       if (isV2(definition)) {
-        const [metadata, dictionaryBuffer, vectorsBuffer] = await Promise.all([
+        const [metadata, dictionaryBuffer] = await Promise.all([
           fetchJSON<CorpusMetadataV2>(fetcher, joinURL(root, definition.corpus)),
           fetchBuffer(fetcher, joinURL(root, definition.lexical.dictionary)),
-          definition.vectors
-            ? fetchBuffer(fetcher, joinURL(root, definition.vectors.file))
-            : undefined,
         ]);
         const lexical = decodeDictionaryV2(dictionaryBuffer);
         if (
@@ -506,28 +523,20 @@ export function createSearch(options: CreateSearchOptions = {}): SearchClient {
         ) {
           throw new SeekiteFormatError(`Seekite corpus ${name} has inconsistent chunk counts`);
         }
-        const vectors =
-          vectorsBuffer && definition.embedding
-            ? decodeVectorsV2(vectorsBuffer, definition.embedding.dimensions)
-            : undefined;
-        if (vectors && vectors.count !== definition.chunks)
-          throw new SeekiteFormatError(`Seekite corpus ${name} has inconsistent vector count`);
         corpora.set(name, {
           version: 2,
           root,
           definition,
           metadata,
           lexical,
-          vectors,
           postings: new LruPromises(32),
           content: new LruPromises(16),
           chunkById: new Map(metadata.chunks.id.map((id, index) => [id, index])),
         });
       } else {
-        const [metadata, lexicalBuffer, vectorsBuffer] = await Promise.all([
+        const [metadata, lexicalBuffer] = await Promise.all([
           fetchJSON<CorpusMetadataV1>(fetcher, joinURL(root, definition.metadata)),
           fetchBuffer(fetcher, joinURL(root, definition.lexical)),
-          definition.vectors ? fetchBuffer(fetcher, joinURL(root, definition.vectors)) : undefined,
         ]);
         if (metadata.version !== 1 || metadata.chunks.length !== definition.chunks)
           throw new Error(`Seekite corpus ${name} has inconsistent chunk counts`);
@@ -537,10 +546,6 @@ export function createSearch(options: CreateSearchOptions = {}): SearchClient {
           definition,
           metadata,
           lexical: decodeLexicalIndex(lexicalBuffer),
-          vectors:
-            vectorsBuffer && definition.embedding
-              ? decodeVectors(vectorsBuffer, definition.embedding.dimensions)
-              : undefined,
         });
       }
     })().finally(() => loading.delete(name));
@@ -550,8 +555,7 @@ export function createSearch(options: CreateSearchOptions = {}): SearchClient {
 
   async function query(value: string, queryOptions: QueryOptions = {}): Promise<QueryResponse> {
     const searchManifest = await manifest();
-    const names = queryOptions.corpora ? [...queryOptions.corpora] : [...corpora.keys()];
-    if (names.length === 0) names.push(...Object.keys(searchManifest.corpora));
+    const names = queryOptions.corpora ?? Object.keys(searchManifest.corpora);
     await Promise.all(names.map(loadCorpus));
     const mode = queryOptions.mode ?? "hybrid";
     const semanticWeight = Math.min(1, Math.max(0, queryOptions.semanticWeight ?? 0.5));

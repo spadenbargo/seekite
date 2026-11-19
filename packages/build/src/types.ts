@@ -120,6 +120,9 @@ export function runtimeVectors(provider: EmbeddingDescriptor): RuntimeVectorsCon
   return { mode: "runtime", provider };
 }
 
-export function defineSource(name: string, load: SourceLoader): SourceAdapter {
+export function defineSource<Loader extends SourceLoader>(
+  name: string,
+  load: Loader,
+): { name: string; load: Loader } {
   return { name, load };
 }

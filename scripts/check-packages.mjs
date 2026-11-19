@@ -360,6 +360,37 @@ async function installSmoke(packages, tarballs, directory) {
     env: { ...process.env, SEEKITE_DISABLE_NATIVE: "1" },
   });
 
+  if (packages.some(({ manifest }) => manifest.name === "create-seekite")) {
+    for (const template of ["react", "vanilla"]) {
+      const starter = path.join(directory, `starter-${template}`);
+      run(bin("create-seekite", project), [`starter-${template}`, "--template", template], {
+        cwd: directory,
+      });
+      // Install exactly what the generated manifest asks an adopter to install.
+      run(executable("npm"), ["install", "--no-audit", "--no-fund"], { cwd: starter });
+      run(executable("npm"), ["run", "build"], { cwd: starter });
+      run(
+        process.execPath,
+        [
+          "--input-type=module",
+          "--eval",
+          `
+        import assert from "node:assert/strict";
+        import { readFile } from "node:fs/promises";
+        import { createSearch } from "@seekite/core";
+        const search = createSearch({
+          url: "/search",
+          fetch: async (url) => new Response(await readFile("dist" + url)),
+        });
+        const response = await search.query("welcome", { mode: "lexical" });
+        assert.equal(response.results[0]?.title, "Welcome");
+      `,
+        ],
+        { cwd: starter },
+      );
+    }
+  }
+
   const browserCandidates = [
     "@seekite/core",
     "@seekite/embeddings-ternlight",

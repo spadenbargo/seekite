@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "dev": "vp dev",
     "build": "node ../../packages/cli/dist/cli.mjs build --output public/search && vp build",
     "preview": "vp preview"
