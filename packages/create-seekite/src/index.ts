@@ -55,6 +55,7 @@ import { seekiteEmbeddings } from "@seekite/embeddings-ternlight"
 
 exposeSearch(createSearch({ key: "search", embeddings: seekiteEmbeddings() }))
 `,
+  "src/vite-env.d.ts": '/// <reference types="vite/client" />\n',
   "src/style.css": `:root { color: #18211f; background: #f5f8f6; font: 16px/1.5 system-ui, sans-serif; }
 body { margin: 0; }
 main { box-sizing: border-box; width: min(48rem, 100%); margin: 0 auto; padding: 4rem 1.25rem; }

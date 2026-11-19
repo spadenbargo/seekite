@@ -88,6 +88,10 @@ Both output modes reuse the same f32 embedding cache.
 
 ## Query options
 
+Omit `corpora` to search every corpus in the manifest. Pass a list to search a
+subset, or an empty list to select none. Preloading a corpus with `load()`
+leaves this scope unchanged. Lexical queries can run before any vector download.
+
 Queries return `{ results, total, facets? }`. Prefix completion applies to the
 unfinished final token; misspelled tokens use bounded edit distance. Results
 group by source document by default.
@@ -107,3 +111,30 @@ const response = await search.query("auth plugn", {
 
 Use `group: "none"` for chunk-level results, or `hydrate: false` when only
 counts and scored metadata are needed. `total` is measured before pagination.
+
+## Typed browser queries
+
+Import the build config as a type and pass it to the client. The browser only
+imports the runtime. Given a docs corpus with a declared `section` facet:
+
+```ts
+import { createSearch } from "@seekite/core"
+import type config from "./search.config"
+
+const search = createSearch<typeof config>()
+const page = await search.query("install", {
+  corpora: ["docs"],
+  facets: ["section"],
+  where: { section: "Guide" },
+})
+const section = page.results[0]?.metadata?.section
+```
+
+Corpus selection controls which facet and filter keys TypeScript accepts.
+Result metadata follows the source document type and is partial because
+unhydrated results only carry indexed fields. For globs or sources without
+declared metadata types, metadata values remain unknown. Keep literal types
+by exporting the result of `defineSearch` directly. Use
+`workerSearch<TypedSearchClient<typeof config>>(...)` for the same consumer
+contract across a worker. For indexes discovered at runtime, omit the type
+argument.

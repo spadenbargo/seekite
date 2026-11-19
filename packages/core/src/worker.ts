@@ -46,7 +46,11 @@ interface RuntimeEndpoint extends WorkerMessageEndpoint {
 
 export type WorkerFactory = () => WorkerMessageEndpoint | PromiseLike<WorkerMessageEndpoint>;
 
-export type WorkerSearchClient<Client extends SearchClient = SearchClient> = Pick<
+type WorkerClient = Omit<SearchClient, "query"> & {
+  query(query: string): ReturnType<SearchClient["query"]>;
+};
+
+export type WorkerSearchClient<Client extends WorkerClient = SearchClient> = Pick<
   Client,
   "load" | "query" | "loaded"
 > & {
@@ -194,10 +198,9 @@ async function stopEndpoint(endpoint: RuntimeEndpoint): Promise<void> {
   }
 }
 
-async function invoke(client: SearchClient, request: RpcRequest): Promise<unknown> {
+async function invoke(client: WorkerClient, request: RpcRequest): Promise<unknown> {
   if (request.method === "warmup") {
-    const warmable = client as SearchClient & { warmup?: () => unknown };
-    if (typeof warmable.warmup === "function") return warmable.warmup();
+    if (client.warmup) return client.warmup();
 
     // An empty query forces createSearch to fetch its manifest/corpora and load
     // the embedding engine, while its result is intentionally not transferred.
@@ -214,7 +217,7 @@ async function invoke(client: SearchClient, request: RpcRequest): Promise<unknow
  * `worker_threads` endpoint. Passing an endpoint is only necessary in Node;
  * browser worker entries use their global scope by default.
  */
-export function exposeSearch<Client extends SearchClient>(
+export function exposeSearch<Client extends WorkerClient>(
   client: Client,
   target: WorkerMessageEndpoint = globalThis,
 ): () => void {
@@ -273,7 +276,7 @@ function terminatedError(): Error {
 }
 
 /** Create a lazy, crash-resilient SearchClient proxy backed by a worker. */
-export function workerSearch<Client extends SearchClient = SearchClient>(
+export function workerSearch<Client extends WorkerClient = SearchClient>(
   factory: WorkerFactory,
 ): WorkerSearchClient<Client> {
   let nextId = 1;
