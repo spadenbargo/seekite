@@ -37,6 +37,10 @@
     "./style.css": {
       "types": "./style.d.ts",
       "default": "./style.css"
+    },
+    "./headless": {
+      "types": "./dist/headless.d.mts",
+      "import": "./dist/headless.mjs"
     }
   },
   "publishConfig": {
@@ -44,7 +48,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "vp pack",
+    "build": "vp pack src/index.ts src/headless.ts --dts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

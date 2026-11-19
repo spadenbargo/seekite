@@ -20,6 +20,7 @@ export default defineConfig({
       "@seekite/lab": path.resolve(import.meta.dirname, "packages/lab/src/index.ts"),
       "@seekite/react": path.resolve(import.meta.dirname, "packages/react/src/index.ts"),
       "@seekite/search-ui": path.resolve(import.meta.dirname, "packages/search-ui/src/index.ts"),
+      "@seekite/vue": path.resolve(import.meta.dirname, "packages/vue/src/index.ts"),
       "@seekite/vite": path.resolve(import.meta.dirname, "packages/vite/src/index.ts"),
     },
   },
