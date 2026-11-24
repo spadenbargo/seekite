@@ -1,0 +1,53 @@
+{
+  "name": "@seekite/vue",
+  "version": "0.1.0-alpha.0",
+  "description": "Headless Vue binding for Seekite search state",
+  "keywords": [
+    "headless-ui",
+    "search",
+    "vue"
+  ],
+  "homepage": "https://seekite.badenspargo.com/docs/framework-adapters",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/vue"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/search-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "vue": "3.5.41"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

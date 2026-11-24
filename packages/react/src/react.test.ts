@@ -3,6 +3,8 @@
 import { Fragment, StrictMode, act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { createSearchController } from "@seekite/search-ui";
+import { useSearchState } from "./headless.js";
 import type { SearchController, SearchUIClient, SearchUIState, SeekiteResult } from "./index.js";
 import { SearchBox, SearchDialog, SeekiteProvider, useSeekite } from "./index.js";
 
@@ -100,6 +102,24 @@ describe("@seekite/react interactions", () => {
     await Promise.resolve();
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it("subscribes to a caller-owned controller and switches without a provider", async () => {
+    const first = createSearchController({ client: fakeClient() });
+    const second = createSearchController({ client: fakeClient() });
+    function View({ controller }: { controller: SearchController }) {
+      return createElement("output", null, useSearchState(controller).query);
+    }
+    await act(async () => root.render(createElement(View, { controller: first })));
+    await act(async () => first.setQuery("first"));
+    expect(host.textContent).toBe("first");
+    await act(async () => root.render(createElement(View, { controller: second })));
+    await act(async () => first.setQuery("stale"));
+    expect(host.textContent).toBe("");
+    await act(async () => second.setQuery("second"));
+    expect(host.textContent).toBe("second");
+    first.destroy();
+    second.destroy();
   });
 
   it("implements combobox, grouped-listbox, facets, live status, and keyboard selection", async () => {

@@ -1,3 +1,4 @@
+export { useSearchState } from "./headless.js";
 export {
   SearchViewProvider,
   SeekiteProvider,

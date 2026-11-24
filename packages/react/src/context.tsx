@@ -1,3 +1,4 @@
+import { useSearchState } from "./headless.js";
 import {
   createContext,
   useContext,
@@ -5,7 +6,6 @@ import {
   useId,
   useMemo,
   useRef,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -33,8 +33,8 @@ export interface SearchView {
   onResultSelect?: ResultSelectHandler;
 }
 
-const ControllerContext = createContext<SearchController | undefined>(undefined);
-const ViewContext = createContext<SearchView | undefined>(undefined);
+const ControllerContext = /* @__PURE__ */ createContext<SearchController | undefined>(undefined);
+const ViewContext = /* @__PURE__ */ createContext<SearchView | undefined>(undefined);
 
 function ids(prefix: string): SearchView {
   return {
@@ -87,14 +87,7 @@ export function useSearchController(): SearchController {
 
 export function useSeekite(): readonly [SearchUIState, SearchController] {
   const controller = useSearchController();
-  const store = useMemo(
-    () => ({
-      subscribe: (listener: () => void) => controller.subscribe(listener),
-      snapshot: () => controller.getState(),
-    }),
-    [controller],
-  );
-  const state = useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot);
+  const state = useSearchState(controller);
   return useMemo(() => [state, controller] as const, [state, controller]);
 }
 

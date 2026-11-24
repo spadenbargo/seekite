@@ -56,7 +56,8 @@
     "@seekite/build": "workspace:*",
     "@seekite/core": "workspace:*",
     "@seekite/search-ui": "workspace:*",
-    "@seekite/vite": "workspace:*"
+    "@seekite/vite": "workspace:*",
+    "@seekite/vue": "workspace:*"
   },
   "devDependencies": {
     "@vue/server-renderer": "^3.5.41",
