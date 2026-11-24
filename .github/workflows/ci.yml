@@ -232,7 +232,17 @@ jobs:
           for tarball in "$RUNNER_TEMP"/native-packages/*.tgz; do
             npm publish "$tarball" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
           done
-          jq -r '.plan[][] | [.tarball.path, .tag] | @tsv' "$RUNNER_TEMP/release-pack/publish-plan.json" |
+          # A partial release depends on unchanged packages already available on npm.
+          mkdir -p "$RUNNER_TEMP/registry-baseline"
+          for manifest in packages/*/package.json; do
+            if jq -e '.private == true' "$manifest" >/dev/null; then continue; fi
+            name=$(jq -r .name "$manifest")
+            version=$(jq -r .version "$manifest")
+            if jq -e --arg name "$name" 'any(.plan[][]; .name == $name and .kind == "publish")' "$RUNNER_TEMP/release-pack/publish-plan.json" >/dev/null; then continue; fi
+            baseline=$(npm pack "$name@$version" --registry=https://registry.npmjs.org --ignore-scripts --silent --pack-destination "$RUNNER_TEMP/registry-baseline")
+            npm publish "$RUNNER_TEMP/registry-baseline/$baseline" --registry "$NPM_CONFIG_REGISTRY" --tag "$npm_tag" --provenance=false
+          done
+          jq -r '.plan[][] | select(.kind == "publish") | [.tarball.path, .tag] | @tsv' "$RUNNER_TEMP/release-pack/publish-plan.json" |
             while IFS=$'\t' read -r tarball tag; do
               npm publish "$RUNNER_TEMP/release-pack/$tarball" \
                 --registry "$NPM_CONFIG_REGISTRY" \
