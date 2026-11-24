@@ -29,8 +29,8 @@ export default defineConfig({
   build: { target: "es2022" },
   worker: { format: "es" },
   plugins: [
-    tailwindcss(),
-    tanstackStart({
+    ...tailwindcss(),
+    ...tanstackStart({
       pages: [
         { path: "/", prerender: { enabled: true } },
         { path: "/playground", prerender: { enabled: true } },
@@ -49,7 +49,7 @@ export default defineConfig({
         prerender: { enabled: true, outputPath: "/_shell", crawlLinks: false },
       },
     }),
-    viteReact(),
+    ...viteReact(),
     seekite({ config: "search.config.ts", indexing: "vite", assetsDir: "search" }),
   ],
 });

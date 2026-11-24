@@ -15,7 +15,14 @@ export default defineConfig({
     // Prose and vendored/generated code are excluded: docs/READMEs are hand-authored
     // markdown owned by other agents, and wasm/native output is generated (wasm-bindgen
     // glue, Cargo.toml, tokenizer.json) rather than authored TS/JS.
-    ignorePatterns: ["**/*.md", "docs/**", "**/wasm/**", "**/native/**", "**/routeTree.gen.ts"],
+    ignorePatterns: [
+      "**/*.md",
+      "docs/**",
+      "packages/engine-native/binding.cjs",
+      "**/wasm/**",
+      "**/native/**",
+      "**/routeTree.gen.ts",
+    ],
   },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
@@ -57,39 +64,45 @@ export default defineConfig({
           "cargo clippy --manifest-path packages/embeddings-ternlight/native/Cargo.toml --no-default-features --features emb_int4 --all-targets -- -D warnings",
           "cargo clippy --manifest-path packages/engine-native/crates/seekite-engine-napi/Cargo.toml --all-targets -- -D warnings",
         ],
-        input: [
-          "packages/embeddings-ternlight/native/src/**",
-          "packages/embeddings-ternlight/native/assets/tokenizer.json",
-          "packages/embeddings-ternlight/native/Cargo.*",
-          "packages/engine-native/crates/seekite-engine-napi/src/**",
-          "packages/engine-native/crates/seekite-engine-napi/Cargo.*",
-          "packages/engine-native/crates/seekite-engine-napi/build.rs",
-        ],
-        output: [],
+        cache: {
+          input: [
+            "packages/embeddings-ternlight/native/src/**",
+            "packages/embeddings-ternlight/native/assets/tokenizer.json",
+            "packages/embeddings-ternlight/native/Cargo.*",
+            "packages/engine-native/crates/seekite-engine-napi/src/**",
+            "packages/engine-native/crates/seekite-engine-napi/Cargo.*",
+            "packages/engine-native/crates/seekite-engine-napi/build.rs",
+          ],
+          output: [],
+        },
       },
       "native:build": {
         command: "pnpm --filter @seekite/engine-native build:native",
-        input: [
-          "packages/embeddings-ternlight/native/src/**",
-          "packages/embeddings-ternlight/native/assets/tokenizer.json",
-          "packages/embeddings-ternlight/native/Cargo.*",
-          "packages/engine-native/crates/**",
-          "packages/engine-native/models/**",
-          "packages/engine-native/binding.cjs",
-          "packages/engine-native/package.json",
-        ],
-        output: ["packages/engine-native/*.node"],
+        cache: {
+          input: [
+            "packages/embeddings-ternlight/native/src/**",
+            "packages/embeddings-ternlight/native/assets/tokenizer.json",
+            "packages/embeddings-ternlight/native/Cargo.*",
+            "packages/engine-native/crates/**",
+            "packages/engine-native/models/**",
+            "packages/engine-native/binding.cjs",
+            "packages/engine-native/package.json",
+          ],
+          output: ["packages/engine-native/*.node"],
+        },
       },
       "wasm:build": {
         command: "pnpm --filter @seekite/embeddings-ternlight build:wasm",
-        env: ["SEEKITE_MINI_MODEL", "SEEKITE_BASE_MODEL"],
-        input: [
-          "packages/embeddings-ternlight/native/src/**",
-          "packages/embeddings-ternlight/native/assets/tokenizer.json",
-          "packages/embeddings-ternlight/native/Cargo.*",
-          "packages/embeddings-ternlight/scripts/build-wasm.sh",
-        ],
-        output: ["packages/embeddings-ternlight/wasm/**"],
+        cache: {
+          env: ["SEEKITE_MINI_MODEL", "SEEKITE_BASE_MODEL"],
+          input: [
+            "packages/embeddings-ternlight/native/src/**",
+            "packages/embeddings-ternlight/native/assets/tokenizer.json",
+            "packages/embeddings-ternlight/native/Cargo.*",
+            "packages/embeddings-ternlight/scripts/build-wasm.sh",
+          ],
+          output: ["packages/embeddings-ternlight/wasm/**"],
+        },
       },
       docs: {
         command: "pnpm --filter @seekite/docs build",
@@ -103,11 +116,13 @@ export default defineConfig({
           "@seekite/react#build",
           "@seekite/lab#build",
         ],
-        input: [
-          { pattern: "apps/docs/**", base: "workspace" },
-          { pattern: "docs/**", base: "workspace" },
-        ],
-        output: [{ pattern: "apps/docs/dist/**", base: "workspace" }],
+        cache: {
+          input: [
+            { pattern: "apps/docs/**", base: "workspace" },
+            { pattern: "docs/**", base: "workspace" },
+          ],
+          output: [{ pattern: "apps/docs/dist/**", base: "workspace" }],
+        },
       },
       pipeline: {
         command: ["vp check", "vp test run", "pnpm build", "vp run native:check"],
