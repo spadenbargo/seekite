@@ -184,6 +184,7 @@ export interface FilterPredicate {
 export type WhereClause = Record<string, FilterValue | FilterPredicate>;
 
 export interface QueryOptions {
+  /** Defaults to every corpus in the manifest. An empty array selects none. */
   corpora?: string[];
   mode?: SearchMode;
   semanticWeight?: number;
