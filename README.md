@@ -101,7 +101,7 @@ const results = await search.query("authentication", { corpora: ["docs"] })
 ```
 
 See [Getting started](docs/getting-started.md), the [index format](docs/index-format.md),
-and the runnable [examples](examples).
+the [framework adapter guide](docs/framework-adapters.md), and the runnable [examples](examples).
 
 ## Repository
 
