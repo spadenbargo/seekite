@@ -1,0 +1,54 @@
+{
+  "name": "@seekite/angular",
+  "version": "0.1.0-alpha.0",
+  "description": "Headless Angular binding for Seekite search state",
+  "keywords": [
+    "angular",
+    "headless-ui",
+    "search"
+  ],
+  "homepage": "https://seekite.badenspargo.com/docs/framework-adapters",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/angular"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/search-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@angular/core": "20.3.35",
+    "rxjs": "7.8.2"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=17 <23"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

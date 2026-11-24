@@ -33,7 +33,7 @@ function classes(...values: Array<string | undefined | false>): string | undefin
   return value || undefined;
 }
 
-const focusableSelector = [
+const focusableSelector = /* @__PURE__ */ [
   'a[href]:not([tabindex="-1"])',
   'button:not([disabled]):not([tabindex="-1"])',
   'input:not([disabled]):not([tabindex="-1"])',

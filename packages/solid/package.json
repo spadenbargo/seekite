@@ -1,0 +1,53 @@
+{
+  "name": "@seekite/solid",
+  "version": "0.1.0-alpha.0",
+  "description": "Headless Solid binding for Seekite search state",
+  "keywords": [
+    "headless-ui",
+    "search",
+    "solid"
+  ],
+  "homepage": "https://seekite.badenspargo.com/docs/framework-adapters",
+  "bugs": {
+    "url": "https://github.com/spadenbargo/seekite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spadenbargo/seekite.git",
+    "directory": "packages/solid"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vp pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@seekite/search-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "solid-js": "2.0.1"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.0 || ^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

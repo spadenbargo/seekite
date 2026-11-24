@@ -1,3 +1,4 @@
+import { useSearchState } from "@seekite/vue";
 import { createSearch, type QueryOptions, type SearchResult } from "@seekite/core";
 import {
   createSearchController,
@@ -9,7 +10,6 @@ import {
   defineComponent,
   h,
   onBeforeUnmount,
-  shallowRef,
   type Component,
   type PropType,
   type VNodeChild,
@@ -108,14 +108,8 @@ export const SeekiteSearchBox = defineComponent({
         facets: props.facets,
         queryOptions: props.queryOptions,
       });
-    const state = shallowRef(controller.getState());
-    const unsubscribe = controller.subscribe(() => {
-      state.value = controller.getState();
-    });
-    onBeforeUnmount(() => {
-      unsubscribe();
-      if (ownsController) controller.destroy();
-    });
+    const state = useSearchState(controller);
+    if (ownsController) onBeforeUnmount(() => controller.destroy());
 
     const navigate = (result: SearchResult): void => {
       controller.close();
