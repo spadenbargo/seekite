@@ -109,6 +109,15 @@ test("the live index stays inline and closes without reopening the site dialog",
   await input.click();
   await input.fill("search quality");
   await expect(demo.getByRole("option").first()).toBeVisible({ timeout: 30_000 });
+  await demo.getByRole("button", { name: "Compare with lexical search" }).click();
+  await expect(
+    demo.getByRole("heading", { name: "How hybrid ranked these results" }),
+  ).toBeVisible();
+  const comparison = demo.getByRole("region", { name: "Ranking comparison" });
+  await expect(comparison.getByRole("listitem").first()).toContainText("Hybrid #1");
+  await expect(comparison.getByRole("listitem").first()).toContainText(/Semantic [\d.]+/);
+  await input.fill("embedding provider");
+  await expect(comparison.getByRole("heading")).toHaveCount(0);
   await input.press("Escape");
   await expect(demo.locator(".seekite-panel")).toBeHidden();
 

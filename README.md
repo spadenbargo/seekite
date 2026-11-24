@@ -25,6 +25,19 @@ No server, database, API key, or external search service.
 
 ## Quick start
 
+Create an app with a local Markdown corpus and worker-backed search:
+
+```sh
+pnpm create seekite@alpha my-search --template react
+cd my-search
+pnpm install
+pnpm dev
+```
+
+Open search with Ctrl+K or ⌘K and search for `welcome`. Use `--template vanilla` for a framework-free UI.
+
+## Add Seekite to an existing app
+
 Install the pieces used by your application:
 
 ```sh
