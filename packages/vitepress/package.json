@@ -60,7 +60,7 @@
     "@seekite/vue": "workspace:*"
   },
   "devDependencies": {
-    "@vue/server-renderer": "^3.5.41",
+    "@vue/server-renderer": "^3.5.42",
     "vue": "^3.5.41"
   },
   "peerDependencies": {
