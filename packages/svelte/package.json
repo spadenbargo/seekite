@@ -1,6 +1,6 @@
 {
   "name": "@seekite/svelte",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Headless Svelte binding for Seekite search state",
   "keywords": [
     "headless-ui",

@@ -1,6 +1,6 @@
 {
   "name": "@seekite/embeddings-ternlight",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Seekite-owned Rust/WASM local embedding provider",
   "keywords": [
     "embeddings",
