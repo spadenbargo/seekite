@@ -1,4 +1,13 @@
 {
+  "@seekite/angular": [
+    "LICENSE",
+    "README.md",
+    "dist/index.d.mts",
+    "dist/index.d.mts.map",
+    "dist/index.mjs",
+    "dist/index.mjs.map",
+    "package.json"
+  ],
   "@seekite/astro": [
     "LICENSE",
     "README.md",
@@ -186,6 +195,10 @@
   "@seekite/react": [
     "LICENSE",
     "README.md",
+    "dist/headless.d.mts",
+    "dist/headless.d.mts.map",
+    "dist/headless.mjs",
+    "dist/headless.mjs.map",
     "dist/index.d.mts",
     "dist/index.d.mts.map",
     "dist/index.mjs",
@@ -195,6 +208,24 @@
     "style.d.ts"
   ],
   "@seekite/search-ui": [
+    "LICENSE",
+    "README.md",
+    "dist/index.d.mts",
+    "dist/index.d.mts.map",
+    "dist/index.mjs",
+    "dist/index.mjs.map",
+    "package.json"
+  ],
+  "@seekite/solid": [
+    "LICENSE",
+    "README.md",
+    "dist/index.d.mts",
+    "dist/index.d.mts.map",
+    "dist/index.mjs",
+    "dist/index.mjs.map",
+    "package.json"
+  ],
+  "@seekite/svelte": [
     "LICENSE",
     "README.md",
     "dist/index.d.mts",
@@ -226,6 +257,15 @@
     "package.json",
     "style.css",
     "style.d.ts"
+  ],
+  "@seekite/vue": [
+    "LICENSE",
+    "README.md",
+    "dist/index.d.mts",
+    "dist/index.d.mts.map",
+    "dist/index.mjs",
+    "dist/index.mjs.map",
+    "package.json"
   ],
   "create-seekite": [
     "LICENSE",

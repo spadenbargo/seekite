@@ -54,76 +54,78 @@ export interface SearchInputProps extends Omit<
   openOnFocus?: boolean;
 }
 
-export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function SearchInput(
-  {
-    className,
-    onChange,
-    onFocus,
-    onKeyDown,
-    onResultSelect,
-    openOnFocus = true,
-    "aria-label": ariaLabel = "Search",
-    ...props
-  },
-  ref,
-) {
-  const [state, controller] = useSeekite();
-  const view = useSearchView();
-  const selected = state.response?.results[state.selectedIndex];
+export const SearchInput = /* @__PURE__ */ forwardRef<HTMLInputElement, SearchInputProps>(
+  function SearchInput(
+    {
+      className,
+      onChange,
+      onFocus,
+      onKeyDown,
+      onResultSelect,
+      openOnFocus = true,
+      "aria-label": ariaLabel = "Search",
+      ...props
+    },
+    ref,
+  ) {
+    const [state, controller] = useSeekite();
+    const view = useSearchView();
+    const selected = state.response?.results[state.selectedIndex];
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
-    onKeyDown?.(event);
-    if (event.defaultPrevented || event.nativeEvent.isComposing) return;
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      controller.moveSelection(event.key === "ArrowDown" ? 1 : -1);
-      return;
-    }
-    if (event.key === "Enter") {
-      const result = controller.selectResult();
-      if (!result) return;
-      event.preventDefault();
-      (onResultSelect ?? view.onResultSelect)?.(result);
-      return;
-    }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-      controller.escape();
-    }
-  };
-
-  return (
-    <input
-      {...props}
-      ref={ref}
-      id={props.id ?? view.inputId}
-      className={classes("seekite-input", className)}
-      role="combobox"
-      aria-label={ariaLabel}
-      aria-autocomplete="list"
-      aria-haspopup="listbox"
-      aria-expanded={state.open}
-      aria-controls={state.open ? view.listboxId : undefined}
-      aria-describedby={state.open ? view.liveId : undefined}
-      aria-activedescendant={
-        state.open && selected ? resultOptionId(view.listboxId, state.selectedIndex) : undefined
+    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+      onKeyDown?.(event);
+      if (event.defaultPrevented || event.nativeEvent.isComposing) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        controller.moveSelection(event.key === "ArrowDown" ? 1 : -1);
+        return;
       }
-      autoComplete={props.autoComplete ?? "off"}
-      spellCheck={props.spellCheck ?? false}
-      value={state.query}
-      onChange={(event) => {
-        onChange?.(event);
-        if (!event.defaultPrevented) controller.setQuery(event.currentTarget.value);
-      }}
-      onFocus={(event) => {
-        onFocus?.(event);
-        if (!event.defaultPrevented && openOnFocus) controller.open();
-      }}
-      onKeyDown={handleKeyDown}
-    />
-  );
-});
+      if (event.key === "Enter") {
+        const result = controller.selectResult();
+        if (!result) return;
+        event.preventDefault();
+        (onResultSelect ?? view.onResultSelect)?.(result);
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        controller.escape();
+      }
+    };
+
+    return (
+      <input
+        {...props}
+        ref={ref}
+        id={props.id ?? view.inputId}
+        className={classes("seekite-input", className)}
+        role="combobox"
+        aria-label={ariaLabel}
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        aria-expanded={state.open}
+        aria-controls={state.open ? view.listboxId : undefined}
+        aria-describedby={state.open ? view.liveId : undefined}
+        aria-activedescendant={
+          state.open && selected ? resultOptionId(view.listboxId, state.selectedIndex) : undefined
+        }
+        autoComplete={props.autoComplete ?? "off"}
+        spellCheck={props.spellCheck ?? false}
+        value={state.query}
+        onChange={(event) => {
+          onChange?.(event);
+          if (!event.defaultPrevented) controller.setQuery(event.currentTarget.value);
+        }}
+        onFocus={(event) => {
+          onFocus?.(event);
+          if (!event.defaultPrevented && openOnFocus) controller.open();
+        }}
+        onKeyDown={handleKeyDown}
+      />
+    );
+  },
+);
 
 function moveToResult(
   controller: ReturnType<typeof useSeekite>[1],
@@ -151,47 +153,51 @@ export interface SearchResultProps extends Omit<LiHTMLAttributes<HTMLLIElement>,
   children?: ReactNode;
 }
 
-export const SearchResult = forwardRef<HTMLLIElement, SearchResultProps>(function SearchResult(
-  { result, index, onResultSelect, children, className, onClick, onPointerMove, ...props },
-  ref,
-) {
-  const [state, controller] = useSeekite();
-  const view = useSearchView();
-  const selected = state.selectedIndex === index;
-  const moveHere = (): void =>
-    moveToResult(controller, state.selectedIndex, state.response?.results.length ?? 0, index);
+export const SearchResult = /* @__PURE__ */ forwardRef<HTMLLIElement, SearchResultProps>(
+  function SearchResult(
+    { result, index, onResultSelect, children, className, onClick, onPointerMove, ...props },
+    ref,
+  ) {
+    const [state, controller] = useSeekite();
+    const view = useSearchView();
+    const selected = state.selectedIndex === index;
+    const moveHere = (): void =>
+      moveToResult(controller, state.selectedIndex, state.response?.results.length ?? 0, index);
 
-  return (
-    <li
-      {...props}
-      ref={ref}
-      id={props.id ?? resultOptionId(view.listboxId, index)}
-      className={classes("seekite-result", selected && "is-selected", className)}
-      role="option"
-      aria-selected={selected}
-      data-result-id={result.id}
-      onPointerMove={(event) => {
-        onPointerMove?.(event);
-        if (!event.defaultPrevented && event.pointerType !== "touch") moveHere();
-      }}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
-        moveHere();
-        const selectedResult = controller.selectResult() ?? result;
-        (onResultSelect ?? view.onResultSelect)?.(selectedResult);
-      }}
-    >
-      {children ?? (
-        <>
-          <span className="seekite-result-title">{result.title}</span>
-          {result.heading ? <span className="seekite-result-heading">{result.heading}</span> : null}
-          <SearchSnippet result={result} />
-        </>
-      )}
-    </li>
-  );
-});
+    return (
+      <li
+        {...props}
+        ref={ref}
+        id={props.id ?? resultOptionId(view.listboxId, index)}
+        className={classes("seekite-result", selected && "is-selected", className)}
+        role="option"
+        aria-selected={selected}
+        data-result-id={result.id}
+        onPointerMove={(event) => {
+          onPointerMove?.(event);
+          if (!event.defaultPrevented && event.pointerType !== "touch") moveHere();
+        }}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
+          moveHere();
+          const selectedResult = controller.selectResult() ?? result;
+          (onResultSelect ?? view.onResultSelect)?.(selectedResult);
+        }}
+      >
+        {children ?? (
+          <>
+            <span className="seekite-result-title">{result.title}</span>
+            {result.heading ? (
+              <span className="seekite-result-heading">{result.heading}</span>
+            ) : null}
+            <SearchSnippet result={result} />
+          </>
+        )}
+      </li>
+    );
+  },
+);
 
 interface ResultGroup {
   corpus: string;
@@ -242,7 +248,14 @@ export function SearchResults({
   const [state] = useSeekite();
   const view = useSearchView();
   const results = state.response?.results ?? [];
-  const groups = resultGroups(results);
+  const row = (result: SearchResultValue, index: number) => {
+    const key = `${result.corpus}-${result.id}`;
+    return renderResult ? (
+      <Fragment key={key}>{renderResult(result, index)}</Fragment>
+    ) : (
+      <SearchResult key={key} result={result} index={index} onResultSelect={onResultSelect} />
+    );
+  };
 
   return (
     <div {...props} className={classes("seekite-results-region", className)}>
@@ -264,7 +277,7 @@ export function SearchResults({
       >
         {children ??
           (groupByCorpus
-            ? groups.map((group) => {
+            ? resultGroups(results).map((group) => {
                 const labelId = `${view.listboxId}-group-${group.start}`;
                 return (
                   <li key={`${group.corpus}-${group.start}`} role="presentation">
@@ -273,39 +286,13 @@ export function SearchResults({
                         {group.corpus}
                       </div>
                       <ul role="presentation" className="seekite-group-results">
-                        {group.results.map(({ result, index }) =>
-                          renderResult ? (
-                            <Fragment key={`${result.corpus}-${result.id}`}>
-                              {renderResult(result, index)}
-                            </Fragment>
-                          ) : (
-                            <SearchResult
-                              key={`${result.corpus}-${result.id}`}
-                              result={result}
-                              index={index}
-                              onResultSelect={onResultSelect}
-                            />
-                          ),
-                        )}
+                        {group.results.map(({ result, index }) => row(result, index))}
                       </ul>
                     </div>
                   </li>
                 );
               })
-            : results.map((result, index) =>
-                renderResult ? (
-                  <Fragment key={`${result.corpus}-${result.id}`}>
-                    {renderResult(result, index)}
-                  </Fragment>
-                ) : (
-                  <SearchResult
-                    key={`${result.corpus}-${result.id}`}
-                    result={result}
-                    index={index}
-                    onResultSelect={onResultSelect}
-                  />
-                ),
-              ))}
+            : results.map(row))}
       </ul>
     </div>
   );

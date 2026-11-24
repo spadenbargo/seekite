@@ -7,8 +7,8 @@ import type {
   VectorDType,
 } from "./types.js";
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder("utf-8", { fatal: true });
+const encoder = /* @__PURE__ */ new TextEncoder();
+const decoder = /* @__PURE__ */ new TextDecoder("utf-8", { fatal: true });
 const DICTIONARY_MAGIC = "SKDX";
 const VECTOR_MAGIC = "SKVX";
 

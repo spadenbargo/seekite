@@ -81,7 +81,7 @@ const rust = defineLanguage({
   },
 });
 
-export const highlighter = createHighlighter({
+const highlighter = createHighlighter({
   fallbackLanguage: "plaintext",
   languages: [plaintext, ts, tsx, rust, shell, json, toml, yaml, html, css, js],
 });
