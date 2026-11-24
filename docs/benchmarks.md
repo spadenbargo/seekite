@@ -18,13 +18,17 @@ Seekite lexical was measured on 23 August 2026 with Node 24.18.0 under Linux
 (WSL2) on an AMD Ryzen 7 7800X3D (16 logical cores). The Git revision was
 `3c1a127`; the worktree contained the benchmark implementation. ZBSearch,
 Orama, and MiniSearch were then measured on the same machine and configuration.
-Hybrid remains pending. Empty cells are not estimates, and an unfavorable
-result is not removed from the published table.
+The hybrid quality run on 19 November 2026 used Node 26.13.1 on the same CPU
+model, with local changes against `314e706`. It completed all 2,029 judged
+queries with semantic weight 0.35. Development work shared the host during
+that run, so the latency comparison below includes only the August measurements.
+The [hybrid report](https://github.com/spadenbargo/seekite/blob/main/bench/beir/results/2026-11-19-hybrid.json)
+records the full metrics, timings and environment.
 
 | Engine | SciFact nDCG@10 | NFCorpus nDCG@10 | ArguAna nDCG@10 | Macro nDCG@10 | Macro ms/query |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Seekite (lexical) | 0.684 | 0.317 | 0.371 | 0.457 | 132.75 |
-| Seekite (hybrid, designated hardware) | Pending | Pending | Pending | Pending | Pending |
+| Seekite (hybrid, November run) | 0.690 | 0.330 | 0.393 | 0.471 | — |
 | ZBSearch 4.0.0 (BM25) | 0.587 | 0.293 | 0.372 | 0.418 | 13.07 |
 | Orama 3.1.18 | 0.377 | 0.245 | 0.202 | 0.274 | 67.07 |
 | MiniSearch 7.2.0 | 0.605 | 0.290 | 0.000† | 0.298† | 3.59† |
@@ -41,6 +45,15 @@ three collections; per-dataset values were 10.02 ms (SciFact), 2.36 ms
 ArguAna query budget after 951 of 1,406 queries, so that collection is scored
 zero. Its displayed macro latency covers only its two completed collections;
 the quality macro includes the zero.
+
+## Browser cost
+
+The [browser measurements and reproduction guide](https://github.com/spadenbargo/seekite/tree/main/bench/browser)
+compare cold time to the first result, warm p95 and transferred bytes for the
+same docs corpus. The report separates search JavaScript, index files, and the
+Wasm binary containing model weights. It also measures the application page
+independently. Browser timings cover the docs workload; BEIR measures ranking
+over larger judged collections.
 
 ## Published ZBSearch comparison
 

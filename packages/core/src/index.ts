@@ -4,3 +4,4 @@ export * from "./lexical.js";
 export * from "./runtime.js";
 export * from "./types.js";
 export * from "./worker.js";
+export type { TypedSearchClient } from "./typed-search.js";

@@ -1,17 +1,19 @@
 import { SearchBox, SearchDialog, SeekiteProvider, useSeekite } from "@seekite/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
-import { useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import type {
   FullSearchTriggerProps,
   SearchTriggerProps,
 } from "fumadocs-ui/layouts/shared/slots/search-trigger";
+import type { QueryResponse, WhereClause } from "@seekite/core";
 import { docsSearch } from "../search";
 
 const searchOptions = {
   queryOptions: {
     corpora: ["docs"],
     mode: "hybrid" as const,
+    semanticWeight: 0.5,
     facets: ["section"],
     group: "expanded" as const,
     hydrate: true,
@@ -80,6 +82,79 @@ export function LiveSearch() {
   );
 }
 
+function RankComparison({
+  query,
+  where,
+  hybrid,
+}: {
+  query: string;
+  where: WhereClause;
+  hybrid: QueryResponse;
+}) {
+  const [lexical, setLexical] = useState<QueryResponse>();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  async function compare() {
+    setPending(true);
+    setError(undefined);
+    try {
+      setLexical(
+        await docsSearch.query(query, { ...searchOptions.queryOptions, mode: "lexical", where }),
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <section className="rank-comparison" aria-label="Ranking comparison">
+      {lexical ? (
+        <>
+          <h3>How hybrid ranked these results</h3>
+          <p>Hybrid gives equal weight to the lexical and semantic scores.</p>
+          <ol>
+            {hybrid.results.slice(0, 3).map((hit, index) => {
+              const lexicalRank =
+                lexical.results.findIndex((row) => row.documentId === hit.documentId) + 1;
+              return (
+                <li key={hit.id}>
+                  <strong>{hit.title}</strong>
+                  <span>
+                    Lexical{" "}
+                    {lexicalRank
+                      ? `#${lexicalRank}`
+                      : lexical.results.length === lexical.total
+                        ? "no match"
+                        : `outside top ${searchOptions.queryOptions.limit}`}{" "}
+                    → Hybrid #{index + 1}
+                  </span>
+                  <span>
+                    Lexical {hit.lexicalScore?.toFixed(3)} · Semantic{" "}
+                    {hit.semanticScore?.toFixed(3) ?? "unavailable"} · Final {hit.score.toFixed(3)}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <p>
+            Lexical top results:{" "}
+            {lexical.results
+              .slice(0, 3)
+              .map((hit) => hit.title)
+              .join(" · ") || "No matches"}
+          </p>
+        </>
+      ) : (
+        <button type="button" disabled={pending} onClick={() => void compare()}>
+          {pending ? "Comparing…" : "Compare with lexical search"}
+        </button>
+      )}
+      {error && <p role="alert">{error}</p>}
+    </section>
+  );
+}
+
 function LiveSearchView() {
   const [state, controller] = useSeekite();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,6 +190,14 @@ function LiveSearchView() {
         }}
         onResultSelect={(result) => window.location.assign(result.url)}
       />
+      {state.open && state.response && state.response.total > 0 && (
+        <RankComparison
+          key={JSON.stringify([state.query, state.activeFilters])}
+          query={state.query}
+          where={state.activeFilters}
+          hybrid={state.response}
+        />
+      )}
     </div>
   );
 }
