@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { encodeLexicalV2 } from "./codec.js";
+import { encodeLexicalV2, encodeVectorsV2 } from "./codec.js";
 import { createLexicalIndexV2 } from "./lexical.js";
 import { createSearch, resolveIndexURL, type SearchClient } from "./runtime.js";
 import type { CorpusMetadataV2, SearchManifestV2 } from "./types.js";
@@ -209,8 +209,20 @@ describe("worker search protocol", () => {
         },
       },
     };
+    const docs = manifest.corpora.docs!;
+    docs.embedding = { provider: "test", dimensions: 1, mode: "static" };
+    docs.vectors = { file: "vectors.bin", dtype: "f32" };
+    manifest.corpora.blog = { ...docs, name: "blog" };
     const assets = new Map<string, string | Uint8Array>([
       ["/search/manifest.json", JSON.stringify(manifest)],
+      [
+        "/search/docs/vectors.bin",
+        encodeVectorsV2(
+          chunks.map(() => Float32Array.of(1)),
+          1,
+          "f32",
+        ),
+      ],
       ["/search/docs/corpus.json", JSON.stringify(metadata)],
       ["/search/docs/lexical/dictionary.bin", lexical.dictionary],
       [
@@ -225,20 +237,59 @@ describe("worker search protocol", () => {
         shard,
       ]),
     ]);
-    const fetcher: typeof fetch = async (input) => {
-      const body = assets.get(String(input));
-      return body === undefined ? new Response(null, { status: 404 }) : new Response(body);
-    };
-    const direct = createSearch({ fetch: fetcher });
+    function runtime() {
+      const fetcher = vi.fn<typeof fetch>(async (input) => {
+        const body = assets.get(String(input));
+        return body === undefined ? new Response(null, { status: 404 }) : new Response(body);
+      });
+      fetcher.mockResolvedValueOnce(new Response(null, { status: 503 }));
+      return {
+        client: createSearch({
+          fetch: fetcher,
+          embeddings: {
+            id: "test",
+            dimensions: 1,
+            embedDocuments: async () => [],
+            embedQuery: async () => Float32Array.of(1),
+          },
+        }),
+        fetcher,
+      };
+    }
+    const direct = runtime();
+    const remote = runtime();
     const [main, worker] = browserPorts();
-    exposeSearch(createSearch({ fetch: fetcher }), worker);
+    exposeSearch(remote.client, worker);
     const proxied = workerSearch(() => main);
-
-    const options = { mode: "lexical", group: "expanded", facets: ["tags"] } as const;
-    const directResponse = await direct.query("canvas ", options);
-    await expect(proxied.query("canvas ", options)).resolves.toEqual(directResponse);
-    expect(directResponse.results[0]?.document.chunks).toHaveLength(2);
-    expect(directResponse.facets).toEqual({ tags: { graphics: 1 } });
+    const responses = [];
+    for (const [client, fetcher] of [
+      [direct.client, direct.fetcher],
+      [proxied, remote.fetcher],
+    ] as const) {
+      await expect(client.load("docs")).rejects.toThrow(/503/);
+      await client.load("docs");
+      const response = await client.query("canvas ", {
+        mode: "lexical",
+        group: "expanded",
+        facets: ["tags"],
+      });
+      expect(response.results.map((hit) => hit.corpus).sort()).toEqual(["blog", "docs"]);
+      expect(response.results[0]?.document.chunks).toHaveLength(2);
+      expect(response.facets).toEqual({ tags: { graphics: 2 } });
+      expect((await client.query("canvas", { corpora: [] })).total).toBe(0);
+      const vectorRequests = () =>
+        fetcher.mock.calls.filter(([url]) => String(url).endsWith("/vectors.bin")).length;
+      expect(vectorRequests()).toBe(0);
+      const semantic = () => client.query("canvas", { mode: "semantic", corpora: ["docs"] });
+      fetcher.mockResolvedValueOnce(new Response(null, { status: 503 }));
+      await expect(semantic()).rejects.toThrow(/503/);
+      const [first, second] = await Promise.all([semantic(), semantic()]);
+      expect(first.results[0]?.semanticScore).toBe(1);
+      expect(first).toEqual(second);
+      expect(vectorRequests()).toBe(2);
+      responses.push(response);
+    }
+    expect(responses[0]).toEqual(responses[1]);
     await proxied.destroy();
   });
 

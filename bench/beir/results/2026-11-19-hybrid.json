@@ -1,0 +1,164 @@
+{
+  "benchmark": "beir-search-quality",
+  "createdAt": "2026-11-19T05:40:13.921Z",
+  "datasets": {
+    "scifact": {
+      "archive": {
+        "bytes": 2816079,
+        "sha256": "536e14446a0ba56ed1398ab1055f39fe852686ecad24a6306c80c490fa8e0165"
+      },
+      "documents": 5183,
+      "engines": {
+        "seekite-hybrid": {
+          "candidate": "hybrid",
+          "engine": "seekite",
+          "key": "seekite-hybrid",
+          "label": "Seekite (hybrid)",
+          "metrics": {
+            "ndcg10": 0.6901433124012246,
+            "map100": 0.6509487901003969,
+            "recall100": 0.9329999999999999,
+            "precision10": 0.0900000000000003,
+            "mrr10": 0.6567605820105819
+          },
+          "timing": {
+            "budgetMs": 300000,
+            "buildSeconds": 19.495423432,
+            "completedQueries": 300,
+            "msPerQuery": 15.838531346666665,
+            "queryMilliseconds": 4751.559404,
+            "queries": 300,
+            "status": "completed"
+          }
+        }
+      },
+      "queries": 300,
+      "referenceBm25Ndcg10": 0.665
+    },
+    "nfcorpus": {
+      "archive": {
+        "bytes": 2448432,
+        "sha256": "efe5be03f8c5b86a5870102d0599d227c8c6e2484328e68c6522560385671b0b"
+      },
+      "documents": 3633,
+      "engines": {
+        "seekite-hybrid": {
+          "candidate": "hybrid",
+          "engine": "seekite",
+          "key": "seekite-hybrid",
+          "label": "Seekite (hybrid)",
+          "metrics": {
+            "ndcg10": 0.32985200245147334,
+            "map100": 0.15287594704338994,
+            "recall100": 0.28324720898381384,
+            "precision10": 0.2402476780185758,
+            "mrr10": 0.5257997936016511
+          },
+          "timing": {
+            "budgetMs": 300000,
+            "buildSeconds": 15.337123023,
+            "completedQueries": 323,
+            "msPerQuery": 8.321965820433448,
+            "queryMilliseconds": 2687.9949600000036,
+            "queries": 323,
+            "status": "completed"
+          }
+        }
+      },
+      "queries": 323,
+      "referenceBm25Ndcg10": 0.325
+    },
+    "arguana": {
+      "archive": {
+        "bytes": 3773617,
+        "sha256": "cfdf79adce27a401b3cd3ea267903134dbfab2c6afeb95d7fe5724a00bf7557b"
+      },
+      "documents": 8674,
+      "engines": {
+        "seekite-hybrid": {
+          "candidate": "hybrid",
+          "engine": "seekite",
+          "key": "seekite-hybrid",
+          "label": "Seekite (hybrid)",
+          "metrics": {
+            "ndcg10": 0.392951409763492,
+            "map100": 0.27142908789942904,
+            "recall100": 0.9779516358463727,
+            "precision10": 0.08058321479373957,
+            "mrr10": 0.2617517893833674
+          },
+          "timing": {
+            "budgetMs": 300000,
+            "buildSeconds": 26.358035008999998,
+            "completedQueries": 1406,
+            "msPerQuery": 176.26294566073966,
+            "queryMilliseconds": 247825.70159899996,
+            "queries": 1406,
+            "status": "completed"
+          }
+        }
+      },
+      "queries": 1406,
+      "referenceBm25Ndcg10": 0.414
+    }
+  },
+  "engineBudgetMs": 300000,
+  "environment": {
+    "cpu": {
+      "cores": 16,
+      "model": "AMD Ryzen 7 7800X3D 8-Core Processor"
+    },
+    "git": {
+      "dirty": true,
+      "revision": "314e7067d5f2e3e4bfbf7957137d2430fe401714"
+    },
+    "host": "winbados",
+    "memory": {
+      "freeBytesAtStart": 9385267200,
+      "totalBytes": 12545507328
+    },
+    "node": "v26.13.1",
+    "packages": {
+      "@seekite/build": "0.1.0-alpha.0",
+      "@seekite/core": "0.1.0-alpha.0",
+      "@seekite/embeddings-ternlight": "0.1.0-alpha.0",
+      "zbsearch": "4.0.0",
+      "@zbsearch/stemmers": "4.0.0",
+      "@zbsearch/stopwords": "4.0.0",
+      "@orama/orama": "3.1.18",
+      "@orama/stemmers": "3.1.18",
+      "@orama/stopwords": "3.1.18",
+      "minisearch": "7.2.0"
+    },
+    "platform": "linux-5.15.167.4-microsoft-standard-WSL2-x64",
+    "v8": "14.6.202.34-node.40"
+  },
+  "macro": {
+    "seekite-hybrid": {
+      "datasets": 3,
+      "label": "Seekite (hybrid)",
+      "metrics": {
+        "ndcg10": 0.47098224153873,
+        "map100": 0.35841794168107194,
+        "recall100": 0.7313996149433954,
+        "precision10": 0.13694363093743858,
+        "mrr10": 0.4814373883318668
+      },
+      "msPerQuery": 125.80840609314932
+    }
+  },
+  "metricDefinitions": {
+    "ndcg10": "trec_eval ndcg_cut.10: linear gain; DCG is sum(rel_i / log2(i + 1)) divided by ideal DCG",
+    "map100": "trec_eval map_cut.100: precision at each relevant rank divided by all relevant documents in qrels",
+    "recall100": "trec_eval recall.100: relevant retrieved in the top 100 divided by relevant",
+    "precision10": "trec_eval P.10: relevant retrieved in the top 10 divided by 10",
+    "mrr10": "BEIR custom MRR@10: reciprocal rank of the first relevant hit in the top 10"
+  },
+  "retrievalLimit": 100,
+  "selection": {
+    "candidates": ["hybrid"],
+    "datasets": ["scifact", "nfcorpus", "arguana"],
+    "engines": ["seekite"]
+  },
+  "version": 1
+}

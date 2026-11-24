@@ -180,7 +180,10 @@ export function filesystem(pattern: string | string[]): SourceAdapter {
         patterns.map(async (entry) => {
           const absolute = path.isAbsolute(entry) ? entry : path.resolve(context.root, entry);
           const information = await stat(absolute).catch(() => undefined);
-          return information?.isDirectory() ? path.join(absolute, "**/*.{md,mdx,html}") : absolute;
+          const pattern = absolute.split(path.sep).join("/");
+          return information?.isDirectory()
+            ? path.posix.join(pattern, "**/*.{md,mdx,html}")
+            : pattern;
         }),
       );
       const files = await glob(absolutePatterns, { absolute: true, onlyFiles: true });

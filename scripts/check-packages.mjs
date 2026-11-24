@@ -360,6 +360,52 @@ async function installSmoke(packages, tarballs, directory) {
     env: { ...process.env, SEEKITE_DISABLE_NATIVE: "1" },
   });
 
+  if (packages.some(({ manifest }) => manifest.name === "create-seekite")) {
+    for (const template of ["react", "vanilla"]) {
+      const starter = path.join(directory, `starter-${template}`);
+      run(bin("create-seekite", project), [`starter-${template}`, "--template", template], {
+        cwd: directory,
+      });
+      // Resolve the starter's Seekite dependency graph against this build, including transitive packages.
+      const manifest = await readManifest(starter);
+      manifest.overrides = {};
+      for (const [
+        index,
+        {
+          manifest: { name },
+        },
+      ] of packages.entries()) {
+        const spec = "file:" + path.relative(starter, tarballs[index]).split(path.sep).join("/");
+        manifest.overrides[name] = spec;
+        for (const group of [manifest.dependencies, manifest.devDependencies]) {
+          if (group && Object.hasOwn(group, name)) group[name] = spec;
+        }
+      }
+      await writeFile(path.join(starter, "package.json"), JSON.stringify(manifest, null, 2));
+      run(executable("npm"), ["install", "--no-audit", "--no-fund"], { cwd: starter });
+      run(executable("npm"), ["run", "build"], { cwd: starter });
+      run(
+        process.execPath,
+        [
+          "--input-type=module",
+          "--eval",
+          `
+        import assert from "node:assert/strict";
+        import { readFile } from "node:fs/promises";
+        import { createSearch } from "@seekite/core";
+        const search = createSearch({
+          url: "/search",
+          fetch: async (url) => new Response(await readFile("dist" + url)),
+        });
+        const response = await search.query("welcome", { mode: "lexical" });
+        assert.equal(response.results[0]?.title, "Welcome");
+      `,
+        ],
+        { cwd: starter },
+      );
+    }
+  }
+
   const browserCandidates = [
     "@seekite/core",
     "@seekite/embeddings-ternlight",

@@ -1095,3 +1095,30 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+.rank-comparison {
+  padding: 0.8rem;
+  color: var(--foreground);
+  background: var(--card);
+  font-size: 0.84rem;
+}
+.rank-comparison h3,
+.rank-comparison button {
+  font-weight: 650;
+}
+.rank-comparison button {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rank-comparison li {
+  margin: 0.6rem 0;
+}
+.rank-comparison li span {
+  display: block;
+  color: var(--muted-foreground);
+}
+
+.live-search .seekite-panel {
+  position: static;
+  margin-top: 0.4rem;
+}
