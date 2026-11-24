@@ -366,7 +366,22 @@ async function installSmoke(packages, tarballs, directory) {
       run(bin("create-seekite", project), [`starter-${template}`, "--template", template], {
         cwd: directory,
       });
-      // Install exactly what the generated manifest asks an adopter to install.
+      // Resolve the starter's Seekite dependency graph against this build, including transitive packages.
+      const manifest = await readManifest(starter);
+      manifest.overrides = {};
+      for (const [
+        index,
+        {
+          manifest: { name },
+        },
+      ] of packages.entries()) {
+        const spec = "file:" + path.relative(starter, tarballs[index]).split(path.sep).join("/");
+        manifest.overrides[name] = spec;
+        for (const group of [manifest.dependencies, manifest.devDependencies]) {
+          if (group && Object.hasOwn(group, name)) group[name] = spec;
+        }
+      }
+      await writeFile(path.join(starter, "package.json"), JSON.stringify(manifest, null, 2));
       run(executable("npm"), ["install", "--no-audit", "--no-fund"], { cwd: starter });
       run(executable("npm"), ["run", "build"], { cwd: starter });
       run(
