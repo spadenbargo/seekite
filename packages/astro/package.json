@@ -1,6 +1,6 @@
 {
   "name": "@seekite/astro",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Astro integration for Seekite static search",
   "keywords": [
     "astro",

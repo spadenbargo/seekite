@@ -1,6 +1,6 @@
 {
   "name": "@seekite/vue",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Headless Vue binding for Seekite search state",
   "keywords": [
     "headless-ui",
